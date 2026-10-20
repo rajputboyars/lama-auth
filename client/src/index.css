@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background:
+      radial-gradient(ellipse at top, rgba(34, 211, 238, 0.08), transparent 60%),
+      radial-gradient(ellipse at bottom right, rgba(167, 139, 250, 0.08), transparent 60%), #05070d;
+    min-height: 100vh;
+  }
+  :focus-visible {
+    outline: 2px solid #22d3ee;
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply rounded-2xl border border-edge bg-panel/80 p-4 backdrop-blur;
+  }
+  .label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400;
+  }
+  .num {
+    @apply font-mono tabular-nums;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40;
+  }
+  .btn-primary {
+    @apply btn border-neon-cyan/60 bg-neon-cyan/10 text-neon-cyan hover:bg-neon-cyan/20 hover:shadow-glow;
+  }
+  .btn-ghost {
+    @apply btn border-edge text-slate-300 hover:border-slate-500;
+  }
+  .input {
+    @apply w-full rounded-lg border border-edge bg-void/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-neon-cyan;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
