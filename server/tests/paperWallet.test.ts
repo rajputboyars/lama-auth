@@ -12,8 +12,10 @@ import {
 } from '../src/services/paperWallet.js';
 
 const costs = DEFAULT_COSTS.crypto;
-const buyAt = (q: number, p: number) => estimateCosts({ side: 'buy', symbol: 'BTC', quantity: q, price: p }, costs);
-const sellAt = (q: number, p: number) => estimateCosts({ side: 'sell', symbol: 'BTC', quantity: q, price: p }, costs);
+const buyAt = (q: number, p: number) =>
+  estimateCosts({ side: 'buy', symbol: 'BTC', quantity: q, price: p }, costs);
+const sellAt = (q: number, p: number) =>
+  estimateCosts({ side: 'sell', symbol: 'BTC', quantity: q, price: p }, costs);
 
 describe('paperWallet', () => {
   it('starts with the default cash for the currency', () => {

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_RISK, type RiskInput, dailyLossPct, evaluate } from '../src/services/riskManager.js';
+import {
+  DEFAULT_RISK,
+  type RiskInput,
+  dailyLossPct,
+  evaluate,
+} from '../src/services/riskManager.js';
 
 const base: RiskInput = {
   action: 'buy',
@@ -46,11 +51,16 @@ describe('riskManager', () => {
   it('kill switch blocks everything, including exits', () => {
     const cfg = { ...DEFAULT_RISK, killSwitch: true };
     expect(evaluate(base, cfg)).toMatchObject({ allowed: false, block: 'kill_switch' });
-    expect(evaluate({ ...base, action: 'sell', heldQuantity: 1 }, cfg)).toMatchObject({ allowed: false });
+    expect(evaluate({ ...base, action: 'sell', heldQuantity: 1 }, cfg)).toMatchObject({
+      allowed: false,
+    });
   });
 
   it('cannot sell without a position', () => {
-    expect(evaluate({ ...base, action: 'sell' }, DEFAULT_RISK)).toMatchObject({ allowed: false, block: 'no_position' });
+    expect(evaluate({ ...base, action: 'sell' }, DEFAULT_RISK)).toMatchObject({
+      allowed: false,
+      block: 'no_position',
+    });
   });
 
   it('computes daily loss as a positive percentage only', () => {

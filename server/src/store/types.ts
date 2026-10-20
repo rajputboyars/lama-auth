@@ -72,6 +72,18 @@ export interface Store {
   insertSignal(s: SignalRecord): Promise<void>;
   listSignals(q: SignalQuery): Promise<{ items: SignalRecord[]; total: number }>;
   resetWallets(filter: { market?: MarketId; strategy?: string }): Promise<number>;
-  saveCandles(market: MarketId, symbol: string, interval: Interval, candles: Candle[]): Promise<void>;
-  getCandles(market: MarketId, symbol: string, interval: Interval, from?: number, to?: number, limit?: number): Promise<Candle[]>;
+  saveCandles(
+    market: MarketId,
+    symbol: string,
+    interval: Interval,
+    candles: Candle[],
+  ): Promise<void>;
+  getCandles(
+    market: MarketId,
+    symbol: string,
+    interval: Interval,
+    from?: number,
+    to?: number,
+    limit?: number,
+  ): Promise<Candle[]>;
 }

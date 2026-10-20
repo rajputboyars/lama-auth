@@ -13,18 +13,30 @@ export interface StrategyRow extends PerformanceStats {
 }
 
 export interface PortfolioSummary {
-  totals: Partial<Record<Currency, { equity: number; startingCash: number; pnl: number; pnlPct: number; costsPaid: number }>>;
+  totals: Partial<
+    Record<
+      Currency,
+      { equity: number; startingCash: number; pnl: number; pnlPct: number; costsPaid: number }
+    >
+  >;
   strategies: StrategyRow[];
   realizedCurve: Partial<Record<Currency, EquityPoint[]>>;
 }
 
-const isClosing = (t: TradeRecord) => t.status === 'filled' && (t.side === 'sell' || t.side === 'arb');
+const isClosing = (t: TradeRecord) =>
+  t.status === 'filled' && (t.side === 'sell' || t.side === 'arb');
 
 /** prices keys are "market:symbol". */
-export function summarize(wallets: WalletRecord[], trades: TradeRecord[], prices: Record<string, number>): PortfolioSummary {
+export function summarize(
+  wallets: WalletRecord[],
+  trades: TradeRecord[],
+  prices: Record<string, number>,
+): PortfolioSummary {
   const sorted = [...trades].sort((a, b) => a.time - b.time);
   const strategies: StrategyRow[] = wallets.map((w) => {
-    const own = sorted.filter((t) => t.market === w.market && t.strategy === w.strategy && isClosing(t));
+    const own = sorted.filter(
+      (t) => t.market === w.market && t.strategy === w.strategy && isClosing(t),
+    );
     const marketPrices = Object.fromEntries(
       w.positions.map((p) => [p.symbol, prices[`${w.market}:${p.symbol}`] ?? p.avgPrice]),
     );
@@ -49,7 +61,13 @@ export function summarize(wallets: WalletRecord[], trades: TradeRecord[], prices
 
   const totals: PortfolioSummary['totals'] = {};
   for (const row of strategies) {
-    const t = (totals[row.currency] ??= { equity: 0, startingCash: 0, pnl: 0, pnlPct: 0, costsPaid: 0 });
+    const t = (totals[row.currency] ??= {
+      equity: 0,
+      startingCash: 0,
+      pnl: 0,
+      pnlPct: 0,
+      costsPaid: 0,
+    });
     t.equity += row.equity;
     t.startingCash += row.startingCash;
     t.costsPaid += row.costsPaid;
@@ -65,7 +83,9 @@ export function summarize(wallets: WalletRecord[], trades: TradeRecord[], prices
     const pts: EquityPoint[] = [];
     const first = Math.min(...wallets.filter((w) => w.currency === cur).map((w) => w.createdAt));
     pts.push({ time: first, equity: running });
-    for (const t of sorted) if (t.currency === cur && isClosing(t)) pts.push({ time: t.time, equity: (running += t.pnl) });
+    for (const t of sorted)
+      if (t.currency === cur && isClosing(t))
+        pts.push({ time: t.time, equity: (running += t.pnl) });
     realizedCurve[cur] = pts;
   }
 
@@ -77,7 +97,12 @@ export function summarize(wallets: WalletRecord[], trades: TradeRecord[], prices
  * unranked, because a handful of lucky trades says nothing.
  */
 export function leaderboard(rows: StrategyRow[]): (StrategyRow & { rank: number | null })[] {
-  const ranked = rows.filter((r) => r.ranked && r.sharpe !== null).sort((a, b) => b.sharpe! - a.sharpe!);
+  const ranked = rows
+    .filter((r) => r.ranked && r.sharpe !== null)
+    .sort((a, b) => b.sharpe! - a.sharpe!);
   const unranked = rows.filter((r) => !ranked.includes(r)).sort((a, b) => b.trades - a.trades);
-  return [...ranked.map((r, i) => ({ ...r, rank: i + 1 })), ...unranked.map((r) => ({ ...r, rank: null }))];
+  return [
+    ...ranked.map((r, i) => ({ ...r, rank: i + 1 })),
+    ...unranked.map((r) => ({ ...r, rank: null })),
+  ];
 }

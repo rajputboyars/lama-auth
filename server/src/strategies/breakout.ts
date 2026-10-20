@@ -4,7 +4,8 @@ import { type Strategy, wait, withDefaults } from './types.js';
 export const breakout: Strategy = {
   id: 'breakout',
   name: 'Breakout Hunter',
-  description: 'Buy when price closes above the highest high of the previous N candles; exit below the lowest low of the previous M candles.',
+  description:
+    'Buy when price closes above the highest high of the previous N candles; exit below the lowest low of the previous M candles.',
   markets: 'all',
   backtestable: true,
   params: [
@@ -25,8 +26,10 @@ export const breakout: Strategy = {
     const high = highest(prior.slice(-p.entryLookback).map((c) => c.high));
     const low = lowest(prior.slice(-p.exitLookback).map((c) => c.low));
 
-    if (!position && last.close > high) return { action: 'buy', reason: `Closed above ${p.entryLookback}-period high ${high}` };
-    if (position && last.close < low) return { action: 'sell', reason: `Closed below ${p.exitLookback}-period low ${low}` };
+    if (!position && last.close > high)
+      return { action: 'buy', reason: `Closed above ${p.entryLookback}-period high ${high}` };
+    if (position && last.close < low)
+      return { action: 'sell', reason: `Closed below ${p.exitLookback}-period low ${low}` };
     return wait('Inside range');
   },
 };

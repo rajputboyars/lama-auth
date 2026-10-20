@@ -38,7 +38,16 @@ describe('backtester', () => {
     const real = runBacktest(input());
     const free = runBacktest({
       ...input(),
-      costs: { feePct: 0, feeFixed: 0, feeMin: 0, taxes: [], spreadPct: 0, slippagePct: 0, delayMs: 0, failChance: 0 },
+      costs: {
+        feePct: 0,
+        feeFixed: 0,
+        feeMin: 0,
+        taxes: [],
+        spreadPct: 0,
+        slippagePct: 0,
+        delayMs: 0,
+        failChance: 0,
+      },
     });
     expect(real.stats.netPnl).toBeLessThan(free.stats.netPnl);
     expect(real.stats.costsPaid).toBeGreaterThan(0);
@@ -60,7 +69,9 @@ describe('backtester', () => {
 
   it('refuses strategies that cannot be backtested and too-short data', () => {
     expect(() => runBacktest({ ...input(), strategy: arbitrage })).toThrow(/cannot be backtested/);
-    expect(() => runBacktest({ ...input(), candles: input().candles.slice(0, 10) })).toThrow(/at least/);
+    expect(() => runBacktest({ ...input(), candles: input().candles.slice(0, 10) })).toThrow(
+      /at least/,
+    );
   });
 });
 

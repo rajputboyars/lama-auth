@@ -40,7 +40,10 @@ const TradesQuery = z.object({
 const SignalsQuery = z.object({
   market: Market.optional(),
   strategy: z.string().max(40).optional(),
-  taken: z.enum(['true', 'false']).transform((v) => v === 'true').optional(),
+  taken: z
+    .enum(['true', 'false'])
+    .transform((v) => v === 'true')
+    .optional(),
   page: Page,
   pageSize: PageSize,
 });
@@ -66,8 +69,13 @@ export const BacktestSchema = z
   })
   .refine((b) => b.to > b.from, { message: '`to` must be after `from`' });
 
-const ResetSchema = z.object({ market: Market.optional(), strategy: z.string().max(40).optional() });
-const ReviewSchema = z.object({ note: z.string().trim().min(10, 'Write at least a sentence').max(2000) });
+const ResetSchema = z.object({
+  market: Market.optional(),
+  strategy: z.string().max(40).optional(),
+});
+const ReviewSchema = z.object({
+  note: z.string().trim().min(10, 'Write at least a sentence').max(2000),
+});
 
 export function createApp(deps: AppDeps) {
   const { store, engine, game, adapters } = deps;
@@ -86,7 +94,9 @@ export function createApp(deps: AppDeps) {
   );
 
   const api = express.Router();
-  api.use(rateLimit({ windowMs: 60_000, limit: 300, standardHeaders: 'draft-7', legacyHeaders: false }));
+  api.use(
+    rateLimit({ windowMs: 60_000, limit: 300, standardHeaders: 'draft-7', legacyHeaders: false }),
+  );
   api.use(requireAuth(deps.auth.jwtSecret));
 
   api.get(
@@ -97,7 +107,11 @@ export function createApp(deps: AppDeps) {
         store.listTrades({ status: 'filled', page: 1, pageSize: 5000 }),
       ]);
       const summary = summarize(wallets, trades.items, engine.latestPrices());
-      res.json({ ...summary, leaderboard: leaderboard(summary.strategies), status: await engine.status() });
+      res.json({
+        ...summary,
+        leaderboard: leaderboard(summary.strategies),
+        status: await engine.status(),
+      });
     }),
   );
 
@@ -106,7 +120,12 @@ export function createApp(deps: AppDeps) {
     ah(async (_req, res) => {
       const prices = engine.latestPrices();
       const wallets = await store.listWallets();
-      res.json(summarize(wallets, [], prices).strategies.map((s, i) => ({ ...wallets[i], equity: s.equity })));
+      res.json(
+        summarize(wallets, [], prices).strategies.map((s, i) => ({
+          ...wallets[i],
+          equity: s.equity,
+        })),
+      );
     }),
   );
 
@@ -119,7 +138,10 @@ export function createApp(deps: AppDeps) {
     }),
   );
 
-  api.get('/trades', ah(async (req, res) => res.json(await store.listTrades(parse(TradesQuery, req.query)))));
+  api.get(
+    '/trades',
+    ah(async (req, res) => res.json(await store.listTrades(parse(TradesQuery, req.query)))),
+  );
 
   api.post(
     '/trades/:id/review',
@@ -127,7 +149,8 @@ export function createApp(deps: AppDeps) {
       const { note } = parse(ReviewSchema, req.body);
       const trade = await store.getTrade(String(req.params.id));
       if (!trade) throw new HttpError(404, 'Trade not found');
-      if (trade.status !== 'filled' || trade.pnl >= 0) throw new HttpError(400, 'Only losing trades can be reviewed');
+      if (trade.status !== 'filled' || trade.pnl >= 0)
+        throw new HttpError(400, 'Only losing trades can be reviewed');
       if (trade.review) throw new HttpError(409, 'Trade already reviewed');
       const updated = await store.reviewTrade(trade.id!, note, Date.now());
       await game.record({ type: 'losing_trade_reviewed' });
@@ -135,14 +158,26 @@ export function createApp(deps: AppDeps) {
     }),
   );
 
-  api.get('/signals', ah(async (req, res) => res.json(await store.listSignals(parse(SignalsQuery, req.query)))));
+  api.get(
+    '/signals',
+    ah(async (req, res) => res.json(await store.listSignals(parse(SignalsQuery, req.query)))),
+  );
 
   api.get(
     '/candles/:market/:symbol',
     ah(async (req, res) => {
       const market = parse(Market, req.params.market);
       const q = parse(CandlesQuery, req.query);
-      res.json(await store.getCandles(market, String(req.params.symbol), q.interval, q.from, q.to, q.limit));
+      res.json(
+        await store.getCandles(
+          market,
+          String(req.params.symbol),
+          q.interval,
+          q.from,
+          q.to,
+          q.limit,
+        ),
+      );
     }),
   );
 
@@ -179,7 +214,10 @@ export function createApp(deps: AppDeps) {
     ),
   );
 
-  api.get('/settings', ah(async (_req, res) => res.json(await store.getSettings())));
+  api.get(
+    '/settings',
+    ah(async (_req, res) => res.json(await store.getSettings())),
+  );
 
   api.put(
     '/settings',
@@ -200,7 +238,8 @@ export function createApp(deps: AppDeps) {
     '/bot/start',
     ah(async (_req, res) => {
       const s = await store.getSettings();
-      if (s.risk.killSwitch) throw new HttpError(409, 'Kill switch is ON. Turn it off in Settings first.');
+      if (s.risk.killSwitch)
+        throw new HttpError(409, 'Kill switch is ON. Turn it off in Settings first.');
       await engine.start();
       res.json(await engine.status());
     }),
@@ -214,7 +253,10 @@ export function createApp(deps: AppDeps) {
     }),
   );
 
-  api.get('/bot/status', ah(async (_req, res) => res.json(await engine.status())));
+  api.get(
+    '/bot/status',
+    ah(async (_req, res) => res.json(await engine.status())),
+  );
 
   api.post(
     '/backtest',
@@ -222,7 +264,11 @@ export function createApp(deps: AppDeps) {
       const b = parse(BacktestSchema, req.body);
       const strategy = getStrategy(b.strategy);
       if (!strategy) throw new HttpError(400, `Unknown strategy: ${b.strategy}`);
-      if (!strategy.backtestable) throw new HttpError(400, `${strategy.name} needs multi-exchange history and cannot be backtested`);
+      if (!strategy.backtestable)
+        throw new HttpError(
+          400,
+          `${strategy.name} needs multi-exchange history and cannot be backtested`,
+        );
       if (strategy.markets !== 'all' && !strategy.markets.includes(b.market)) {
         throw new HttpError(400, `${strategy.name} does not trade the ${b.market} market`);
       }
@@ -265,9 +311,18 @@ export function createApp(deps: AppDeps) {
     }),
   );
 
-  api.get('/game/profile', ah(async (_req, res) => res.json(await game.profile())));
-  api.get('/game/achievements', ah(async (_req, res) => res.json(await game.achievements())));
-  api.get('/game/quests', ah(async (_req, res) => res.json(await game.quests())));
+  api.get(
+    '/game/profile',
+    ah(async (_req, res) => res.json(await game.profile())),
+  );
+  api.get(
+    '/game/achievements',
+    ah(async (_req, res) => res.json(await game.achievements())),
+  );
+  api.get(
+    '/game/quests',
+    ah(async (_req, res) => res.json(await game.quests())),
+  );
 
   app.use('/api', api);
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));

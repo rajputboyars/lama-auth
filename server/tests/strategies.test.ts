@@ -12,7 +12,10 @@ import { candlesFromCloses, upThenDown } from './helpers.js';
 const held: Position = { symbol: 'X', quantity: 1, avgPrice: 100, openedAt: 0 };
 
 /** Runs the strategy over growing windows and returns the actions it takes (as a simple long-only simulation). */
-function actions(candles: Candle[], check: (c: Candle[], p: Position | null) => { action: string }) {
+function actions(
+  candles: Candle[],
+  check: (c: Candle[], p: Position | null) => { action: string },
+) {
   const out: { i: number; action: string }[] = [];
   let pos: Position | null = null;
   for (let i = 1; i <= candles.length; i++) {
@@ -101,7 +104,10 @@ describe('arbitrage', () => {
     { symbol: 'BTC', price: a, time: 0, source: 'kraken' },
     { symbol: 'BTC', price: b, time: 0, source: 'binance' },
   ];
-  const ctx = (a: number, b: number) => ({ venueQuotes: quotes(a, b), costs: DEFAULT_COSTS.crypto });
+  const ctx = (a: number, b: number) => ({
+    venueQuotes: quotes(a, b),
+    costs: DEFAULT_COSTS.crypto,
+  });
 
   it('waits when the gap does not cover round-trip costs', () => {
     expect(arbitrage.check([], null, undefined, ctx(100, 100.2)).action).toBe('wait');
@@ -113,6 +119,8 @@ describe('arbitrage', () => {
     expect(sig.reason).toContain('binance');
   });
   it('waits without two venues', () => {
-    expect(arbitrage.check([], null, undefined, { venueQuotes: [], costs: DEFAULT_COSTS.crypto }).action).toBe('wait');
+    expect(
+      arbitrage.check([], null, undefined, { venueQuotes: [], costs: DEFAULT_COSTS.crypto }).action,
+    ).toBe('wait');
   });
 });

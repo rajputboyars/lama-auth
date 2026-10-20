@@ -48,11 +48,18 @@ export class KiteProvider implements PriceProvider {
     const to = new Date();
     const from = new Date(to.getTime() - INTERVAL_MS[interval] * limit * 5);
     const qs = new URLSearchParams({ from: istString(from), to: istString(to) });
-    const body = await this.getJson<{ data: { candles: [string, number, number, number, number, number][] } }>(
-      `/instruments/historical/${token}/${KITE_INTERVAL[interval]}?${qs}`,
-    );
+    const body = await this.getJson<{
+      data: { candles: [string, number, number, number, number, number][] };
+    }>(`/instruments/historical/${token}/${KITE_INTERVAL[interval]}?${qs}`);
     return body.data.candles
-      .map(([t, open, high, low, close, volume]) => ({ time: Date.parse(t), open, high, low, close, volume }))
+      .map(([t, open, high, low, close, volume]) => ({
+        time: Date.parse(t),
+        open,
+        high,
+        low,
+        close,
+        volume,
+      }))
       .slice(-limit);
   }
 
@@ -78,7 +85,10 @@ export class KiteProvider implements PriceProvider {
     return this.limiter.schedule(() =>
       withRetry(async () => {
         const res = await this.fetchImpl(`https://api.kite.trade${path}`, {
-          headers: { 'X-Kite-Version': '3', Authorization: `token ${this.apiKey}:${this.accessToken}` },
+          headers: {
+            'X-Kite-Version': '3',
+            Authorization: `token ${this.apiKey}:${this.accessToken}`,
+          },
         });
         if (!res.ok) throw new Error(`Kite ${res.status}: ${await res.text()}`);
         return res;

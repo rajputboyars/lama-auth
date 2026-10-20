@@ -8,7 +8,14 @@ import type { Strategy } from '../strategies/types.js';
 import { CANDLE_WINDOW } from '../services/backtester.js';
 import { estimateCosts, rollFailure } from '../services/costModel.js';
 import { cleanCandles, isSaneTick } from '../services/dataGuard.js';
-import { applyBuy, applySell, createWallet, equity, findPosition, updateDrawdown } from '../services/paperWallet.js';
+import {
+  applyBuy,
+  applySell,
+  createWallet,
+  equity,
+  findPosition,
+  updateDrawdown,
+} from '../services/paperWallet.js';
 import { sleep as realSleep } from '../services/retry.js';
 import { type RiskBlock, evaluate } from '../services/riskManager.js';
 import type { Settings } from '../services/settings.js';
@@ -83,7 +90,11 @@ export class BotEngine extends EventEmitter {
 
   async status(): Promise<BotStatus> {
     const settings = await this.store.getSettings();
-    return { running: this.running, killSwitch: settings.risk.killSwitch, markets: Object.fromEntries(this.states) };
+    return {
+      running: this.running,
+      killSwitch: settings.risk.killSwitch,
+      markets: Object.fromEntries(this.states),
+    };
   }
 
   async start(): Promise<void> {
@@ -144,7 +155,10 @@ export class BotEngine extends EventEmitter {
       state.status = 'error';
       state.consecutiveErrors++;
       state.lastError = err instanceof Error ? err.message : String(err);
-      logger.error({ market: id, err: state.lastError, attempt: state.consecutiveErrors }, 'market tick failed');
+      logger.error(
+        { market: id, err: state.lastError, attempt: state.consecutiveErrors },
+        'market tick failed',
+      );
     }
     state.lastTickAt = this.now();
     if (state.status !== prevStatus || state.status === 'error') await this.emitStatus();
@@ -178,7 +192,8 @@ export class BotEngine extends EventEmitter {
         logger.warn({ market: adapter.id, symbol, err: String(err) }, 'symbol skipped this tick');
       }
     }
-    if (symbols.length > 0 && failures === symbols.length) throw new Error(`All ${failures} symbols failed`);
+    if (symbols.length > 0 && failures === symbols.length)
+      throw new Error(`All ${failures} symbols failed`);
 
     await this.markWallets(adapter, strategies);
   }
@@ -188,7 +203,10 @@ export class BotEngine extends EventEmitter {
     const quote = await adapter.getPrice(symbol);
     const key = `${adapter.id}:${symbol}`;
     if (!isSaneTick(this.lastPrice.get(key), quote.price, this.opts.maxTickJumpPct)) {
-      logger.warn({ market: adapter.id, symbol, price: quote.price, prev: this.lastPrice.get(key) }, 'bad tick ignored');
+      logger.warn(
+        { market: adapter.id, symbol, price: quote.price, prev: this.lastPrice.get(key) },
+        'bad tick ignored',
+      );
       return null;
     }
     this.lastPrice.set(key, quote.price);
@@ -205,7 +223,8 @@ export class BotEngine extends EventEmitter {
 
   private async loadWallet(adapter: MarketAdapter, strategy: string): Promise<WalletRecord> {
     const existing = await this.store.getWallet(adapter.id, strategy);
-    const w: WalletRecord = existing ?? createWallet(adapter.id, strategy, adapter.currency, undefined, this.now());
+    const w: WalletRecord =
+      existing ?? createWallet(adapter.id, strategy, adapter.currency, undefined, this.now());
     const today = dayKey(this.now());
     if (w.dayKey !== today) {
       w.dayKey = today;
@@ -226,7 +245,10 @@ export class BotEngine extends EventEmitter {
     const costs = settings.costs[adapter.id];
     let wallet = await this.loadWallet(adapter, strategy.id);
     const position = findPosition(wallet, symbol);
-    const venueQuotes = strategy.id === 'arbitrage' && hasVenueQuotes(adapter) ? await adapter.getVenueQuotes(symbol) : undefined;
+    const venueQuotes =
+      strategy.id === 'arbitrage' && hasVenueQuotes(adapter)
+        ? await adapter.getVenueQuotes(symbol)
+        : undefined;
 
     const signal = strategy.check(candles, position, params, { venueQuotes, costs });
     if (signal.action === 'wait') return;
@@ -265,9 +287,24 @@ export class BotEngine extends EventEmitter {
     await this.sleep(costs.delayMs);
 
     if (strategy.id === 'arbitrage') {
-      wallet = await this.executeArbitrage(adapter, wallet, symbol, decision.quantity, base, settings);
+      wallet = await this.executeArbitrage(
+        adapter,
+        wallet,
+        symbol,
+        decision.quantity,
+        base,
+        settings,
+      );
     } else {
-      wallet = await this.executeTrade(adapter, wallet, symbol, signal.action, decision.quantity, base, settings);
+      wallet = await this.executeTrade(
+        adapter,
+        wallet,
+        symbol,
+        signal.action,
+        decision.quantity,
+        base,
+        settings,
+      );
     }
     await this.store.saveWallet(wallet);
   }
@@ -373,7 +410,10 @@ export class BotEngine extends EventEmitter {
     }
     const qty = Math.min(quantity, wallet.cash / (opp.buyPrice * 1.01));
     const buy = estimateCosts({ side: 'buy', symbol, quantity: qty, price: opp.buyPrice }, costs);
-    const sell = estimateCosts({ side: 'sell', symbol, quantity: qty, price: opp.sellPrice }, costs);
+    const sell = estimateCosts(
+      { side: 'sell', symbol, quantity: qty, price: opp.sellPrice },
+      costs,
+    );
     const pnl = sell.notional - sell.total - (buy.notional + buy.total);
     const filled = await this.store.insertTrade({
       ...trade,
@@ -399,7 +439,11 @@ export class BotEngine extends EventEmitter {
   }
 
   private async recordFailure(trade: TradeRecord, sig: SignalRecord, why: string) {
-    const rec = await this.store.insertTrade({ ...trade, status: 'failed', reason: `${trade.reason} — FAILED: ${why}` });
+    const rec = await this.store.insertTrade({
+      ...trade,
+      status: 'failed',
+      reason: `${trade.reason} — FAILED: ${why}`,
+    });
     await this.store.insertSignal({ ...sig, skipReason: why });
     this.emit('trade:new', rec);
   }

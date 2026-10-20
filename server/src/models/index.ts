@@ -101,7 +101,10 @@ export const CandleModel = mongoose.model(
 
 export const SettingsModel = mongoose.model(
   'Settings',
-  new Schema({ key: { type: String, unique: true }, value: Schema.Types.Mixed }, { versionKey: false, minimize: false }),
+  new Schema(
+    { key: { type: String, unique: true }, value: Schema.Types.Mixed },
+    { versionKey: false, minimize: false },
+  ),
 );
 
 export const PlayerProfileModel = mongoose.model(

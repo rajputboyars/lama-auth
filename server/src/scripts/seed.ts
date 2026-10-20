@@ -31,7 +31,12 @@ const DEMO: { market: MarketId; symbol: string; currency: Currency; start: numbe
   { market: 'global', symbol: 'GC=F', currency: 'USD', start: 2400 },
 ];
 
-export function randomWalk(start: number, count: number, seed: number, endTime = Date.now()): Candle[] {
+export function randomWalk(
+  start: number,
+  count: number,
+  seed: number,
+  endTime = Date.now(),
+): Candle[] {
   const rng = mulberry32(seed);
   const out: Candle[] = [];
   let price = start;
@@ -42,7 +47,14 @@ export function randomWalk(start: number, count: number, seed: number, endTime =
     const close = open * (1 + drift + (rng() - 0.5) * 0.012);
     const high = Math.max(open, close) * (1 + rng() * 0.004);
     const low = Math.min(open, close) * (1 - rng() * 0.004);
-    out.push({ time: endTime - (count - i) * HOUR, open, high, low, close, volume: Math.round(rng() * 1000) });
+    out.push({
+      time: endTime - (count - i) * HOUR,
+      open,
+      high,
+      low,
+      close,
+      volume: Math.round(rng() * 1000),
+    });
     price = close;
   }
   return out;
@@ -51,7 +63,15 @@ export function randomWalk(start: number, count: number, seed: number, endTime =
 async function main() {
   const reset = process.argv.includes('--reset');
   await mongoose.connect(env.MONGO_URI);
-  const models = [WalletModel, TradeModel, SignalModel, CandleModel, PlayerProfileModel, AchievementModel, QuestModel];
+  const models = [
+    WalletModel,
+    TradeModel,
+    SignalModel,
+    CandleModel,
+    PlayerProfileModel,
+    AchievementModel,
+    QuestModel,
+  ];
   if (reset) {
     await Promise.all(models.map((m) => (m as typeof WalletModel).deleteMany({})));
   } else if ((await WalletModel.countDocuments()) > 0) {
@@ -123,7 +143,8 @@ async function main() {
         currency: d.currency,
         startingCash: DEFAULT_STARTING_CASH[d.currency],
         cash,
-        positions: qty > 0 ? [{ symbol: d.symbol, quantity: qty, avgPrice: avg, openedAt: last.time }] : [],
+        positions:
+          qty > 0 ? [{ symbol: d.symbol, quantity: qty, avgPrice: avg, openedAt: last.time }] : [],
         realizedPnl: result.trades.reduce((a, t) => a + t.pnl, 0),
         feesPaid: fees,
         taxesPaid: taxes,

@@ -39,7 +39,12 @@ export class GameService extends EventEmitter {
     for (const g of out.xpGained) this.emit('game:xp', { ...g, ...levelInfo(out.state.xp) });
     for (const key of out.unlocked) {
       const def = ACHIEVEMENTS.find((a) => a.key === key)!;
-      this.emit('game:achievement', { key, name: def.name, icon: def.icon, description: def.description });
+      this.emit('game:achievement', {
+        key,
+        name: def.name,
+        icon: def.icon,
+        description: def.description,
+      });
     }
   }
 
@@ -54,7 +59,11 @@ export class GameService extends EventEmitter {
       day: yesterday,
       walletsMaxDrawdownPct: Math.max(0, ...wallets.map((w) => w.maxDrawdownPct)),
       strategiesTested7d: [
-        ...new Set(wallets.filter((w) => now - w.createdAt >= SEVEN_DAYS).map((w) => `${w.strategy}@${w.market}`)),
+        ...new Set(
+          wallets
+            .filter((w) => now - w.createdAt >= SEVEN_DAYS)
+            .map((w) => `${w.strategy}@${w.market}`),
+        ),
       ],
     });
   }
@@ -69,7 +78,9 @@ export class GameService extends EventEmitter {
     return {
       xp: profile?.xp ?? 0,
       counters: { ...emptyCounters(), ...((profile?.counters as object) ?? {}) },
-      achievements: Object.fromEntries(achievements.map((a) => [a.key as string, a.unlockedAt as number])),
+      achievements: Object.fromEntries(
+        achievements.map((a) => [a.key as string, a.unlockedAt as number]),
+      ),
       quests: currentQuests(
         quests.map((q) => ({
           key: q.key as string,
@@ -92,7 +103,11 @@ export class GameService extends EventEmitter {
     );
     await Promise.all([
       ...Object.entries(state.achievements).map(([key, unlockedAt]) =>
-        AchievementModel.updateOne({ key }, { $setOnInsert: { key, unlockedAt } }, { upsert: true }),
+        AchievementModel.updateOne(
+          { key },
+          { $setOnInsert: { key, unlockedAt } },
+          { upsert: true },
+        ),
       ),
       ...state.quests.map((q) =>
         QuestModel.updateOne({ key: q.key, period: q.period }, { $set: q }, { upsert: true }),
@@ -121,7 +136,13 @@ export class GameService extends EventEmitter {
     const state = await this.load();
     return state.quests.map((q) => {
       const def = QUESTS.find((d) => d.key === q.key)!;
-      return { ...q, title: def.title, description: def.description, xp: def.xp, cadence: def.period };
+      return {
+        ...q,
+        title: def.title,
+        description: def.description,
+        xp: def.xp,
+        cadence: def.period,
+      };
     });
   }
 }

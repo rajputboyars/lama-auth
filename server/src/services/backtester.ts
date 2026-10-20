@@ -2,7 +2,14 @@ import type { Strategy } from '../strategies/types.js';
 import type { Params } from '../strategies/types.js';
 import type { Candle, Currency, MarketId, Side } from '../types.js';
 import { type CostConfig, estimateCosts, rollFailure } from './costModel.js';
-import { applyBuy, applySell, createWallet, equity, findPosition, type WalletState } from './paperWallet.js';
+import {
+  applyBuy,
+  applySell,
+  createWallet,
+  equity,
+  findPosition,
+  type WalletState,
+} from './paperWallet.js';
 import { type RiskConfig, evaluate } from './riskManager.js';
 import { type EquityPoint, type PerformanceStats, computeStats } from './stats.js';
 
@@ -59,12 +66,20 @@ const dayKey = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 
 export function runBacktest(input: BacktestInput): BacktestResult {
   const { strategy, candles, costs, risk, symbol } = input;
-  if (!strategy.backtestable) throw new Error(`${strategy.name} cannot be backtested from single-venue candles`);
+  if (!strategy.backtestable)
+    throw new Error(`${strategy.name} cannot be backtested from single-venue candles`);
   const minNeeded = strategy.minCandles(input.params ?? {});
-  if (candles.length < minNeeded + 2) throw new Error(`Need at least ${minNeeded + 2} candles, got ${candles.length}`);
+  if (candles.length < minNeeded + 2)
+    throw new Error(`Need at least ${minNeeded + 2} candles, got ${candles.length}`);
 
   const rng = mulberry32(input.seed ?? 42);
-  let wallet: WalletState = createWallet(input.market, strategy.id, input.currency, input.startingCash, candles[0].time);
+  let wallet: WalletState = createWallet(
+    input.market,
+    strategy.id,
+    input.currency,
+    input.startingCash,
+    candles[0].time,
+  );
   const trades: BacktestTrade[] = [];
   const equityCurve: EquityPoint[] = [];
   let failedOrders = 0;
@@ -112,7 +127,10 @@ export function runBacktest(input: BacktestInput): BacktestResult {
 
     // Fill at the NEXT candle's open: we never trade at the price that produced the signal.
     const side = signal.action;
-    const breakdown = estimateCosts({ side, symbol, quantity: decision.quantity, price: next.open }, costs);
+    const breakdown = estimateCosts(
+      { side, symbol, quantity: decision.quantity, price: next.open },
+      costs,
+    );
     try {
       const res =
         side === 'buy'
@@ -141,8 +159,10 @@ export function runBacktest(input: BacktestInput): BacktestResult {
     'Fills use the next candle open plus spread, slippage, fees and taxes.',
     'Past results do not predict future results. Small samples are noise.',
   ];
-  if (closed.length < 30) notes.push(`Only ${closed.length} closed trades: too few to judge this strategy.`);
-  if (pos) notes.push('A position is still open; it is valued at the last close, before exit costs.');
+  if (closed.length < 30)
+    notes.push(`Only ${closed.length} closed trades: too few to judge this strategy.`);
+  if (pos)
+    notes.push('A position is still open; it is valued at the last close, before exit costs.');
 
   return {
     stats: computeStats(closed, equityCurve, startingCash, wallet.feesPaid + wallet.taxesPaid),

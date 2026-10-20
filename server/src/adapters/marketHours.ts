@@ -29,5 +29,9 @@ export function isSessionOpen(session: Session, now: Date = new Date()): boolean
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
   const day = WEEKDAYS.indexOf(get('weekday'));
   const minutes = Number(get('hour')) * 60 + Number(get('minute'));
-  return session.days.includes(day) && minutes >= toMinutes(session.open) && minutes < toMinutes(session.close);
+  return (
+    session.days.includes(day) &&
+    minutes >= toMinutes(session.open) &&
+    minutes < toMinutes(session.close)
+  );
 }

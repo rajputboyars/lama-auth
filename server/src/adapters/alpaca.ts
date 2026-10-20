@@ -4,7 +4,13 @@ import { INTERVAL_MS } from './base.js';
 import type { Interval } from './types.js';
 import type { PriceProvider } from './yahoo.js';
 
-const TIMEFRAME: Record<Interval, string> = { '1m': '1Min', '5m': '5Min', '15m': '15Min', '1h': '1Hour', '1d': '1Day' };
+const TIMEFRAME: Record<Interval, string> = {
+  '1m': '1Min',
+  '5m': '5Min',
+  '15m': '15Min',
+  '1h': '1Hour',
+  '1d': '1Day',
+};
 
 /** Alpaca market data (read-only). The free plan's IEX feed covers only part of US volume. */
 export class AlpacaProvider implements PriceProvider {
@@ -25,7 +31,12 @@ export class AlpacaProvider implements PriceProvider {
       `/v2/stocks/${encodeURIComponent(symbol)}/trades/latest?feed=${this.feed}`,
     );
     if (!body.trade?.p) throw new Error(`Alpaca returned no trade for ${symbol}`);
-    return { symbol, price: body.trade.p, time: Date.parse(body.trade.t), source: `alpaca/${this.feed}` };
+    return {
+      symbol,
+      price: body.trade.p,
+      time: Date.parse(body.trade.t),
+      source: `alpaca/${this.feed}`,
+    };
   }
 
   async getCandles(symbol: string, interval: Interval, limit: number): Promise<Candle[]> {
@@ -38,11 +49,18 @@ export class AlpacaProvider implements PriceProvider {
       sort: 'desc',
       feed: this.feed,
     });
-    const body = await this.get<{ bars?: { t: string; o: number; h: number; l: number; c: number; v: number }[] }>(
-      `/v2/stocks/${encodeURIComponent(symbol)}/bars?${qs}`,
-    );
+    const body = await this.get<{
+      bars?: { t: string; o: number; h: number; l: number; c: number; v: number }[];
+    }>(`/v2/stocks/${encodeURIComponent(symbol)}/bars?${qs}`);
     return (body.bars ?? [])
-      .map((b) => ({ time: Date.parse(b.t), open: b.o, high: b.h, low: b.l, close: b.c, volume: b.v }))
+      .map((b) => ({
+        time: Date.parse(b.t),
+        open: b.o,
+        high: b.h,
+        low: b.l,
+        close: b.c,
+        volume: b.v,
+      }))
       .reverse();
   }
 

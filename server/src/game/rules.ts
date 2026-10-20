@@ -11,7 +11,12 @@ export type GameEvent =
   | { type: 'risk_breach' }
   | { type: 'strategy_added'; strategy: string }
   /** Daily evaluation of the previous day; `walletsMaxDrawdownPct` is the worst wallet. */
-  | { type: 'day_closed'; day: string; walletsMaxDrawdownPct: number; strategiesTested7d: string[] };
+  | {
+      type: 'day_closed';
+      day: string;
+      walletsMaxDrawdownPct: number;
+      strategiesTested7d: string[];
+    };
 
 export const XP = {
   backtest_run: 20,
@@ -80,16 +85,65 @@ export interface GameOutcome {
 }
 
 export const ACHIEVEMENTS: AchievementDef[] = [
-  ach('first_backtest', 'First Backtest', 'Run your first backtest.', '🧪', (c) => c.backtestsRun, 1),
-  ach('risk_guardian', 'Risk Guardian', '7 days in a row without hitting a risk limit.', '🛡️', (c) => c.bestRiskCleanStreak, 7),
-  ach('honest_trader', 'Honest Trader', '50 paper trades logged with full costs.', '📒', (c) => c.tradesLogged, 50),
-  ach('scientist', 'Scientist', 'Backtest 3 different strategies on the same market.', '🔬', (c) => c.maxStrategiesComparedOnMarket, 3),
-  ach('survivor', 'Survivor', 'Keep max drawdown under 10% for 30 days.', '🏔️', (c) => c.bestSurvivorStreak, 30),
+  ach(
+    'first_backtest',
+    'First Backtest',
+    'Run your first backtest.',
+    '🧪',
+    (c) => c.backtestsRun,
+    1,
+  ),
+  ach(
+    'risk_guardian',
+    'Risk Guardian',
+    '7 days in a row without hitting a risk limit.',
+    '🛡️',
+    (c) => c.bestRiskCleanStreak,
+    7,
+  ),
+  ach(
+    'honest_trader',
+    'Honest Trader',
+    '50 paper trades logged with full costs.',
+    '📒',
+    (c) => c.tradesLogged,
+    50,
+  ),
+  ach(
+    'scientist',
+    'Scientist',
+    'Backtest 3 different strategies on the same market.',
+    '🔬',
+    (c) => c.maxStrategiesComparedOnMarket,
+    3,
+  ),
+  ach(
+    'survivor',
+    'Survivor',
+    'Keep max drawdown under 10% for 30 days.',
+    '🏔️',
+    (c) => c.bestSurvivorStreak,
+    30,
+  ),
   ach('reflective', 'Reflective', 'Review 10 losing trades.', '🪞', (c) => c.lossesReviewed, 10),
-  ach('patient', 'Patient Tester', 'Run a strategy in paper mode for 7 days.', '⏳', (c) => c.testedStrategies.length, 1),
+  ach(
+    'patient',
+    'Patient Tester',
+    'Run a strategy in paper mode for 7 days.',
+    '⏳',
+    (c) => c.testedStrategies.length,
+    1,
+  ),
 ];
 
-function ach(key: string, name: string, description: string, icon: string, metric: (c: Counters) => number, target: number): AchievementDef {
+function ach(
+  key: string,
+  name: string,
+  description: string,
+  icon: string,
+  metric: (c: Counters) => number,
+  target: number,
+): AchievementDef {
   return {
     key,
     name,
@@ -101,8 +155,22 @@ function ach(key: string, name: string, description: string, icon: string, metri
 }
 
 export const QUESTS: QuestDef[] = [
-  { key: 'daily_backtests', title: 'Lab Rat', description: 'Run 2 backtests today.', period: 'daily', target: 2, xp: 30 },
-  { key: 'daily_review', title: 'Post-Mortem', description: 'Review 1 losing trade today.', period: 'daily', target: 1, xp: 20 },
+  {
+    key: 'daily_backtests',
+    title: 'Lab Rat',
+    description: 'Run 2 backtests today.',
+    period: 'daily',
+    target: 2,
+    xp: 30,
+  },
+  {
+    key: 'daily_review',
+    title: 'Post-Mortem',
+    description: 'Review 1 losing trade today.',
+    period: 'daily',
+    target: 1,
+    xp: 20,
+  },
   {
     key: 'weekly_compare',
     title: 'Fair Fight',
@@ -111,7 +179,14 @@ export const QUESTS: QuestDef[] = [
     target: 2,
     xp: 60,
   },
-  { key: 'weekly_discipline', title: 'Steady Hands', description: 'Finish 5 days this week without hitting a risk limit.', period: 'weekly', target: 5, xp: 80 },
+  {
+    key: 'weekly_discipline',
+    title: 'Steady Hands',
+    description: 'Finish 5 days this week without hitting a risk limit.',
+    period: 'weekly',
+    target: 5,
+    xp: 80,
+  },
 ];
 
 export function emptyCounters(): Counters {
@@ -141,7 +216,13 @@ export function levelInfo(xp: number) {
   const level = Math.floor(Math.sqrt(Math.max(0, xp) / 100)) + 1;
   const floor = 100 * (level - 1) ** 2;
   const next = 100 * level ** 2;
-  return { level, xp, levelFloorXp: floor, nextLevelXp: next, progressPct: ((xp - floor) / (next - floor)) * 100 };
+  return {
+    level,
+    xp,
+    levelFloorXp: floor,
+    nextLevelXp: next,
+    progressPct: ((xp - floor) / (next - floor)) * 100,
+  };
 }
 
 export const dayKey = (ms: number) => new Date(ms).toISOString().slice(0, 10);
@@ -205,7 +286,8 @@ export function applyEvent(prev: GameState, event: GameEvent, now: number): Game
       const isNew = !list.has(event.strategy);
       list.add(event.strategy);
       c.backtested[event.market] = [...list];
-      if (isNew && list.size >= 2) award(XP.strategies_compared, `Compared ${list.size} strategies on ${event.market}`);
+      if (isNew && list.size >= 2)
+        award(XP.strategies_compared, `Compared ${list.size} strategies on ${event.market}`);
       c.maxStrategiesComparedOnMarket = Math.max(c.maxStrategiesComparedOnMarket, list.size);
       bump('daily_backtests');
       const wq = quest('weekly_compare');

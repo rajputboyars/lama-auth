@@ -17,16 +17,20 @@ export interface ArbOpportunity {
 export const arbitrage: Strategy = {
   id: 'arbitrage',
   name: 'Bridge Runner',
-  description: 'Cross-exchange arbitrage: trades only when the price gap between two exchanges beats all round-trip costs plus a safety margin.',
+  description:
+    'Cross-exchange arbitrage: trades only when the price gap between two exchanges beats all round-trip costs plus a safety margin.',
   markets: ['crypto'],
   backtestable: false,
-  params: [{ key: 'minEdgePct', label: 'Min net edge %', min: 0.05, max: 5, step: 0.05, default: 0.3 }],
+  params: [
+    { key: 'minEdgePct', label: 'Min net edge %', min: 0.05, max: 5, step: 0.05, default: 0.3 },
+  ],
   minCandles: () => 0,
   check(_candles, _position, params, ctx) {
     const { minEdgePct } = withDefaults(this.params, params);
     const opp = findOpportunity(ctx);
     if (!opp) return wait('Need quotes from at least 2 exchanges');
-    if (opp.netEdgePct < minEdgePct) return wait(`Net edge ${opp.netEdgePct.toFixed(3)}% after costs < ${minEdgePct}%`);
+    if (opp.netEdgePct < minEdgePct)
+      return wait(`Net edge ${opp.netEdgePct.toFixed(3)}% after costs < ${minEdgePct}%`);
     return {
       action: 'buy',
       reason: `Buy on ${opp.buyVenue} @${opp.buyPrice}, sell on ${opp.sellVenue} @${opp.sellPrice} (net ${opp.netEdgePct.toFixed(3)}%)`,
@@ -43,5 +47,11 @@ export function findOpportunity(ctx: Parameters<Strategy['check']>[3]): ArbOppor
   const sellFill = fillPriceFor('sell', dear.price, ctx.costs);
   const feeFrac = (2 * ctx.costs.feePct) / 100;
   const netEdgePct = ((sellFill - buyFill) / buyFill - feeFrac) * 100;
-  return { buyVenue: cheap.source, sellVenue: dear.source, buyPrice: cheap.price, sellPrice: dear.price, netEdgePct };
+  return {
+    buyVenue: cheap.source,
+    sellVenue: dear.source,
+    buyPrice: cheap.price,
+    sellPrice: dear.price,
+    netEdgePct,
+  };
 }

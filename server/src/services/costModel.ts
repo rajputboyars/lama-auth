@@ -86,7 +86,8 @@ export function fillPriceFor(side: Side, mid: number, cfg: CostConfig): number {
 }
 
 export function estimateCosts(trade: TradeIntent, cfg: CostConfig): CostBreakdown {
-  if (trade.quantity <= 0 || trade.price <= 0) throw new Error('Trade needs positive quantity and price');
+  if (trade.quantity <= 0 || trade.price <= 0)
+    throw new Error('Trade needs positive quantity and price');
 
   const fillPrice = fillPriceFor(trade.side, trade.price, cfg);
   const notional = fillPrice * trade.quantity;

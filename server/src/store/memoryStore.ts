@@ -2,7 +2,14 @@ import type { Interval } from '../adapters/types.js';
 import { type Settings, defaultSettings } from '../services/settings.js';
 import type { Candle, MarketId } from '../types.js';
 import { resetWallet } from '../services/paperWallet.js';
-import type { SignalQuery, SignalRecord, Store, TradeQuery, TradeRecord, WalletRecord } from './types.js';
+import type {
+  SignalQuery,
+  SignalRecord,
+  Store,
+  TradeQuery,
+  TradeRecord,
+  WalletRecord,
+} from './types.js';
 
 export class MemoryStore implements Store {
   settings: Settings = defaultSettings();
@@ -34,7 +41,9 @@ export class MemoryStore implements Store {
   }
   async listTrades(q: TradeQuery) {
     const all = this.trades
-      .filter((t) => (!q.market || t.market === q.market) && (!q.strategy || t.strategy === q.strategy))
+      .filter(
+        (t) => (!q.market || t.market === q.market) && (!q.strategy || t.strategy === q.strategy),
+      )
       .filter((t) => !q.status || t.status === q.status)
       .sort((a, b) => b.time - a.time);
     return { items: all.slice((q.page - 1) * q.pageSize, q.page * q.pageSize), total: all.length };
@@ -53,7 +62,9 @@ export class MemoryStore implements Store {
   }
   async listSignals(q: SignalQuery) {
     const all = this.signals
-      .filter((s) => (!q.market || s.market === q.market) && (!q.strategy || s.strategy === q.strategy))
+      .filter(
+        (s) => (!q.market || s.market === q.market) && (!q.strategy || s.strategy === q.strategy),
+      )
       .filter((s) => q.taken === undefined || s.taken === q.taken)
       .sort((a, b) => b.time - a.time);
     return { items: all.slice((q.page - 1) * q.pageSize, q.page * q.pageSize), total: all.length };
@@ -61,7 +72,11 @@ export class MemoryStore implements Store {
   async resetWallets(filter: { market?: MarketId; strategy?: string }) {
     let n = 0;
     for (const [k, w] of this.wallets) {
-      if ((filter.market && w.market !== filter.market) || (filter.strategy && w.strategy !== filter.strategy)) continue;
+      if (
+        (filter.market && w.market !== filter.market) ||
+        (filter.strategy && w.strategy !== filter.strategy)
+      )
+        continue;
       this.wallets.set(k, resetWallet(w));
       n++;
     }
@@ -73,7 +88,14 @@ export class MemoryStore implements Store {
     for (const c of candles) m.set(c.time, c);
     this.candles.set(key, m);
   }
-  async getCandles(market: MarketId, symbol: string, interval: Interval, from = 0, to = Infinity, limit = 5000) {
+  async getCandles(
+    market: MarketId,
+    symbol: string,
+    interval: Interval,
+    from = 0,
+    to = Infinity,
+    limit = 5000,
+  ) {
     const m = this.candles.get(`${market}:${symbol}:${interval}`);
     return [...(m?.values() ?? [])]
       .filter((c) => c.time >= from && c.time <= to)

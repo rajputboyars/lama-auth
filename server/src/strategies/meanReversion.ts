@@ -4,7 +4,8 @@ import { type Strategy, wait, withDefaults } from './types.js';
 export const meanReversion: Strategy = {
   id: 'meanrev',
   name: 'Rubber Band',
-  description: 'Mean reversion: buy when RSI is oversold and price is below the lower Bollinger band; exit when RSI recovers or price reaches the middle band.',
+  description:
+    'Mean reversion: buy when RSI is oversold and price is below the lower Bollinger band; exit when RSI recovers or price reaches the middle band.',
   markets: 'all',
   backtestable: true,
   params: [
@@ -27,10 +28,16 @@ export const meanReversion: Strategy = {
     const price = closes.at(-1)!;
 
     if (!position && r < p.oversold && price < bb.lower) {
-      return { action: 'buy', reason: `RSI ${r.toFixed(1)} < ${p.oversold} and price below lower band` };
+      return {
+        action: 'buy',
+        reason: `RSI ${r.toFixed(1)} < ${p.oversold} and price below lower band`,
+      };
     }
     if (position && (r > p.exitRsi || price >= bb.mid)) {
-      return { action: 'sell', reason: r > p.exitRsi ? `RSI recovered to ${r.toFixed(1)}` : 'Price back to middle band' };
+      return {
+        action: 'sell',
+        reason: r > p.exitRsi ? `RSI recovered to ${r.toFixed(1)}` : 'Price back to middle band',
+      };
     }
     return wait(`RSI ${r.toFixed(1)}`);
   },

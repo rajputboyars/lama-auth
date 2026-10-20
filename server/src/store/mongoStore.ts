@@ -1,10 +1,23 @@
 import mongoose from 'mongoose';
 import type { Interval } from '../adapters/types.js';
-import { CandleModel, SettingsModel, SignalModel, TradeModel, WalletModel } from '../models/index.js';
+import {
+  CandleModel,
+  SettingsModel,
+  SignalModel,
+  TradeModel,
+  WalletModel,
+} from '../models/index.js';
 import { type Settings, withSettingDefaults } from '../services/settings.js';
 import type { Candle, MarketId } from '../types.js';
 import { resetWallet } from '../services/paperWallet.js';
-import type { SignalQuery, SignalRecord, Store, TradeQuery, TradeRecord, WalletRecord } from './types.js';
+import type {
+  SignalQuery,
+  SignalRecord,
+  Store,
+  TradeQuery,
+  TradeRecord,
+  WalletRecord,
+} from './types.js';
 
 const FINE_INTERVAL_TTL_MS: Partial<Record<Interval, number>> = {
   '1m': 14 * 86_400_000,
@@ -33,7 +46,9 @@ export class MongoStore implements Store {
 
   async saveWallet(w: WalletRecord): Promise<void> {
     const { id: _id, ...data } = w as WalletRecord & { id?: string };
-    await WalletModel.replaceOne({ market: w.market, strategy: w.strategy }, data, { upsert: true });
+    await WalletModel.replaceOne({ market: w.market, strategy: w.strategy }, data, {
+      upsert: true,
+    });
   }
 
   async listWallets(): Promise<WalletRecord[]> {
@@ -69,7 +84,11 @@ export class MongoStore implements Store {
 
   async reviewTrade(id: string, note: string, at: number): Promise<TradeRecord | null> {
     if (!mongoose.isValidObjectId(id)) return null;
-    const doc = await TradeModel.findByIdAndUpdate(id, { $set: { review: { note, at } } }, { new: true }).lean();
+    const doc = await TradeModel.findByIdAndUpdate(
+      id,
+      { $set: { review: { note, at } } },
+      { new: true },
+    ).lean();
     return doc ? strip<TradeRecord>(doc) : null;
   }
 
@@ -95,13 +114,20 @@ export class MongoStore implements Store {
 
   async resetWallets(filter: { market?: MarketId; strategy?: string }): Promise<number> {
     const wallets = (await this.listWallets()).filter(
-      (w) => (!filter.market || w.market === filter.market) && (!filter.strategy || w.strategy === filter.strategy),
+      (w) =>
+        (!filter.market || w.market === filter.market) &&
+        (!filter.strategy || w.strategy === filter.strategy),
     );
     for (const w of wallets) await this.saveWallet(resetWallet(w));
     return wallets.length;
   }
 
-  async saveCandles(market: MarketId, symbol: string, interval: Interval, candles: Candle[]): Promise<void> {
+  async saveCandles(
+    market: MarketId,
+    symbol: string,
+    interval: Interval,
+    candles: Candle[],
+  ): Promise<void> {
     if (!candles.length) return;
     const ttl = FINE_INTERVAL_TTL_MS[interval];
     await CandleModel.bulkWrite(
@@ -116,13 +142,28 @@ export class MongoStore implements Store {
     );
   }
 
-  async getCandles(market: MarketId, symbol: string, interval: Interval, from = 0, to = Date.now(), limit = 5000) {
-    const docs = await CandleModel.find({ market, symbol, interval, time: { $gte: from, $lte: to } })
+  async getCandles(
+    market: MarketId,
+    symbol: string,
+    interval: Interval,
+    from = 0,
+    to = Date.now(),
+    limit = 5000,
+  ) {
+    const docs = await CandleModel.find({
+      market,
+      symbol,
+      interval,
+      time: { $gte: from, $lte: to },
+    })
       .sort({ time: -1 })
       .limit(limit)
       .lean();
     return docs
       .reverse()
-      .map(({ time, open, high, low, close, volume }) => ({ time, open, high, low, close, volume }) as Candle);
+      .map(
+        ({ time, open, high, low, close, volume }) =>
+          ({ time, open, high, low, close, volume }) as Candle,
+      );
   }
 }

@@ -9,7 +9,9 @@ import type { Interval, MarketAdapter, MultiVenueQuotes } from './types.js';
 /** The subset of a CCXT exchange we use (lets tests inject fakes). */
 export interface CcxtLike {
   id: string;
-  fetchTicker(symbol: string): Promise<{ last?: number | null; close?: number | null; timestamp?: number | null }>;
+  fetchTicker(
+    symbol: string,
+  ): Promise<{ last?: number | null; close?: number | null; timestamp?: number | null }>;
   fetchOHLCV(symbol: string, timeframe: string, since?: number, limit?: number): Promise<unknown[]>;
 }
 
@@ -47,10 +49,15 @@ export class CryptoAdapter extends BaseAdapter implements MarketAdapter, MultiVe
   }
 
   async getVenueQuotes(symbol: string): Promise<Quote[]> {
-    const results = await Promise.allSettled(this.exchanges.map((ex) => this.quoteFrom(ex, symbol)));
+    const results = await Promise.allSettled(
+      this.exchanges.map((ex) => this.quoteFrom(ex, symbol)),
+    );
     return results.flatMap((r, i) => {
       if (r.status === 'fulfilled') return [r.value];
-      logger.debug({ exchange: this.exchanges[i].id, symbol, err: String(r.reason) }, 'venue quote failed');
+      logger.debug(
+        { exchange: this.exchanges[i].id, symbol, err: String(r.reason) },
+        'venue quote failed',
+      );
       return [];
     });
   }

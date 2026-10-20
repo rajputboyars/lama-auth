@@ -20,7 +20,8 @@ export function parse<T extends ZodTypeAny>(schema: T, data: unknown): z.infer<T
 
 /** Wraps async handlers so rejected promises reach the error middleware. */
 export const ah =
-  (fn: (req: Request, res: Response) => Promise<unknown>) => (req: Request, res: Response, next: NextFunction) =>
+  (fn: (req: Request, res: Response) => Promise<unknown>) =>
+  (req: Request, res: Response, next: NextFunction) =>
     fn(req, res).catch(next);
 
 export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
@@ -32,6 +33,9 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
     res.status(400).json({ error: 'Invalid input', details: err.issues });
     return;
   }
-  logger.error({ err: err instanceof Error ? err.stack : String(err), path: req.path }, 'unhandled API error');
+  logger.error(
+    { err: err instanceof Error ? err.stack : String(err), path: req.path },
+    'unhandled API error',
+  );
   res.status(500).json({ error: 'Internal server error' });
 }

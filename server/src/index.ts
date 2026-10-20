@@ -23,7 +23,8 @@ function resolveJwtSecret(): string {
 
 async function main() {
   const jwtSecret = resolveJwtSecret();
-  if (!env.ADMIN_PASSWORD_HASH) logger.warn('ADMIN_PASSWORD_HASH not set: login is disabled until you set it');
+  if (!env.ADMIN_PASSWORD_HASH)
+    logger.warn('ADMIN_PASSWORD_HASH not set: login is disabled until you set it');
 
   await mongoose.connect(env.MONGO_URI, { serverSelectionTimeoutMS: 10_000 });
   logger.info('connected to MongoDB');
@@ -35,9 +36,16 @@ async function main() {
 
   // Game hooks: only discipline signals, never profit.
   engine.on('trade:new', (t: TradeRecord) => {
-    if (t.status === 'filled') void game.record({ type: 'trade_logged' }).catch((e) => logger.warn({ e: String(e) }, 'game'));
+    if (t.status === 'filled')
+      void game
+        .record({ type: 'trade_logged' })
+        .catch((e) => logger.warn({ e: String(e) }, 'game'));
   });
-  engine.on('risk:breach', () => void game.record({ type: 'risk_breach' }).catch((e) => logger.warn({ e: String(e) }, 'game')));
+  engine.on(
+    'risk:breach',
+    () =>
+      void game.record({ type: 'risk_breach' }).catch((e) => logger.warn({ e: String(e) }, 'game')),
+  );
   for (const s of STRATEGIES) await game.record({ type: 'strategy_added', strategy: s.id });
 
   const dayTimer = setInterval(async () => {
@@ -59,7 +67,9 @@ async function main() {
   });
   const http = createServer(app);
   const io = attachSocket(http, engine, game, jwtSecret, env.CLIENT_ORIGIN);
-  http.listen(env.PORT, () => logger.info({ port: env.PORT }, 'API listening — PAPER TRADING ONLY'));
+  http.listen(env.PORT, () =>
+    logger.info({ port: env.PORT }, 'API listening — PAPER TRADING ONLY'),
+  );
 
   const settings = await store.getSettings();
   if (settings.botRunning && !settings.risk.killSwitch) await engine.start();

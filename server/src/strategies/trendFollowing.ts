@@ -4,7 +4,8 @@ import { type Strategy, wait, withDefaults } from './types.js';
 export const trendFollowing: Strategy = {
   id: 'trend',
   name: 'Trend Rider',
-  description: 'Moving-average cross: buy when the fast SMA crosses above the slow SMA, exit on the cross back down.',
+  description:
+    'Moving-average cross: buy when the fast SMA crosses above the slow SMA, exit on the cross back down.',
   markets: 'all',
   backtestable: true,
   params: [
@@ -24,8 +25,10 @@ export const trendFollowing: Strategy = {
     const f1 = sma(closes, fast)!;
     const s1 = sma(closes, slow)!;
 
-    if (!position && f0 <= s0 && f1 > s1) return { action: 'buy', reason: `SMA${fast} crossed above SMA${slow}` };
-    if (position && f0 >= s0 && f1 < s1) return { action: 'sell', reason: `SMA${fast} crossed below SMA${slow}` };
+    if (!position && f0 <= s0 && f1 > s1)
+      return { action: 'buy', reason: `SMA${fast} crossed above SMA${slow}` };
+    if (position && f0 >= s0 && f1 < s1)
+      return { action: 'sell', reason: `SMA${fast} crossed below SMA${slow}` };
     return wait(f1 > s1 ? 'Uptrend, no new cross' : 'Downtrend, no new cross');
   },
 };

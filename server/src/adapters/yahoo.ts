@@ -48,7 +48,9 @@ export class YahooProvider implements PriceProvider {
   async getCandles(symbol: string, interval: Interval, limit: number): Promise<Candle[]> {
     // Yahoo only keeps ~7 days of 1m data; ask for a window wide enough to cover weekends.
     const span = INTERVAL_MS[interval] * limit * 3;
-    const period1 = new Date(Date.now() - Math.min(span, interval === '1m' ? 6.5 * 86_400_000 : span));
+    const period1 = new Date(
+      Date.now() - Math.min(span, interval === '1m' ? 6.5 * 86_400_000 : span),
+    );
     const res = await this.call(() =>
       yahooFinance.chart(this.mapSymbol(symbol), { period1, interval: YAHOO_INTERVAL[interval] }),
     );

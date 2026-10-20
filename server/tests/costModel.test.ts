@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { type CostConfig, DEFAULT_COSTS, estimateCosts, fillPriceFor, rollFailure } from '../src/services/costModel.js';
+import {
+  type CostConfig,
+  DEFAULT_COSTS,
+  estimateCosts,
+  fillPriceFor,
+  rollFailure,
+} from '../src/services/costModel.js';
 
 const cfg: CostConfig = {
   feePct: 0.1,
@@ -28,8 +34,14 @@ describe('costModel', () => {
   });
 
   it('applies minimum and maximum fees', () => {
-    expect(estimateCosts({ side: 'buy', symbol: 'X', quantity: 1, price: 1 }, { ...cfg, feeMin: 5 }).fees).toBe(5);
-    expect(estimateCosts({ side: 'buy', symbol: 'X', quantity: 1e6, price: 100 }, { ...cfg, feeMax: 20 }).fees).toBe(20);
+    expect(
+      estimateCosts({ side: 'buy', symbol: 'X', quantity: 1, price: 1 }, { ...cfg, feeMin: 5 })
+        .fees,
+    ).toBe(5);
+    expect(
+      estimateCosts({ side: 'buy', symbol: 'X', quantity: 1e6, price: 100 }, { ...cfg, feeMax: 20 })
+        .fees,
+    ).toBe(20);
   });
 
   it('models Indian delivery charges: STT both sides, stamp on buy, DP on sell, GST on fees', () => {
@@ -45,8 +57,12 @@ describe('costModel', () => {
 
   it('only charges US regulatory fees on sells', () => {
     const us = DEFAULT_COSTS.us;
-    expect(estimateCosts({ side: 'buy', symbol: 'AAPL', quantity: 10, price: 200 }, us).taxes).toBe(0);
-    expect(estimateCosts({ side: 'sell', symbol: 'AAPL', quantity: 10, price: 200 }, us).taxes).toBeGreaterThan(0);
+    expect(estimateCosts({ side: 'buy', symbol: 'AAPL', quantity: 10, price: 200 }, us).taxes).toBe(
+      0,
+    );
+    expect(
+      estimateCosts({ side: 'sell', symbol: 'AAPL', quantity: 10, price: 200 }, us).taxes,
+    ).toBeGreaterThan(0);
   });
 
   it('a round trip at an unchanged price always loses money', () => {

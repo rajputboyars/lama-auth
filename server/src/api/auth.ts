@@ -19,7 +19,8 @@ const TOKEN_TTL = '12h';
 
 export async function login(cfg: AuthConfig, body: unknown): Promise<string> {
   const { username, password } = parse(LoginSchema, body);
-  if (!cfg.passwordHash) throw new HttpError(503, 'Admin password not configured. Set ADMIN_PASSWORD_HASH in .env');
+  if (!cfg.passwordHash)
+    throw new HttpError(503, 'Admin password not configured. Set ADMIN_PASSWORD_HASH in .env');
   // Always run bcrypt so a wrong username takes as long as a wrong password.
   const ok = (await bcrypt.compare(password, cfg.passwordHash)) && username === cfg.username;
   if (!ok) throw new HttpError(401, 'Invalid username or password');

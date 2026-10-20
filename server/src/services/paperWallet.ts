@@ -61,7 +61,9 @@ export function applyBuy(
 ): FillResult {
   const cashNeeded = costs.notional + costs.total;
   if (cashNeeded > w.cash + 1e-9) {
-    throw new Error(`Insufficient paper cash: need ${cashNeeded.toFixed(2)}, have ${w.cash.toFixed(2)}`);
+    throw new Error(
+      `Insufficient paper cash: need ${cashNeeded.toFixed(2)}, have ${w.cash.toFixed(2)}`,
+    );
   }
   const existing = findPosition(w, symbol);
   const unitCost = cashNeeded / quantity;
@@ -96,7 +98,8 @@ export function applySell(
   costs: CostBreakdown,
 ): FillResult {
   const pos = findPosition(w, symbol);
-  if (!pos || pos.quantity + 1e-12 < quantity) throw new Error(`Cannot sell ${quantity} ${symbol}: not held`);
+  if (!pos || pos.quantity + 1e-12 < quantity)
+    throw new Error(`Cannot sell ${quantity} ${symbol}: not held`);
 
   const proceeds = costs.notional - costs.total;
   const pnl = proceeds - pos.avgPrice * quantity;
@@ -121,7 +124,10 @@ export function applySell(
 
 /** Marks positions to market at the given prices (missing prices fall back to cost basis). */
 export function equity(w: WalletState, prices: Record<string, number>): number {
-  return w.positions.reduce((sum, p) => sum + p.quantity * (prices[p.symbol] ?? p.avgPrice), w.cash);
+  return w.positions.reduce(
+    (sum, p) => sum + p.quantity * (prices[p.symbol] ?? p.avgPrice),
+    w.cash,
+  );
 }
 
 export function updateDrawdown(w: WalletState, currentEquity: number): WalletState {

@@ -10,7 +10,8 @@ function setup() {
   const adapter = new FakeAdapter();
   const store = new MemoryStore();
   // Only the trend strategy, so the test is about the engine, not strategy interplay.
-  for (const id of Object.keys(store.settings.strategies)) store.settings.strategies[id].enabled = id === 'trend';
+  for (const id of Object.keys(store.settings.strategies))
+    store.settings.strategies[id].enabled = id === 'trend';
   store.settings.costs.crypto = { ...store.settings.costs.crypto, delayMs: 0, failChance: 0 };
   const engine = new BotEngine(new Map<MarketId, MarketAdapter>([['crypto', adapter]]), store, {
     maxTickJumpPct: 10,

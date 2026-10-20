@@ -8,7 +8,13 @@ const ENGINE_EVENTS = ['price:update', 'trade:new', 'wallet:update', 'bot:status
 const GAME_EVENTS = ['game:xp', 'game:achievement'] as const;
 
 /** Relays engine + game events to authenticated dashboard clients. */
-export function attachSocket(http: HttpServer, engine: BotEngine, game: GameService, jwtSecret: string, origin: string) {
+export function attachSocket(
+  http: HttpServer,
+  engine: BotEngine,
+  game: GameService,
+  jwtSecret: string,
+  origin: string,
+) {
   const io = new Server(http, { cors: { origin } });
   io.use((socket, next) => {
     try {

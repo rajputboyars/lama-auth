@@ -24,9 +24,14 @@ export function defaultSettings(): Settings {
     candleInterval: '1m',
     risk: { ...DEFAULT_RISK },
     costs: structuredClone(DEFAULT_COSTS),
-    markets: Object.fromEntries(MARKET_IDS.map((m) => [m, { enabled: true }])) as Settings['markets'],
+    markets: Object.fromEntries(
+      MARKET_IDS.map((m) => [m, { enabled: true }]),
+    ) as Settings['markets'],
     strategies: Object.fromEntries(
-      STRATEGIES.map((s) => [s.id, { enabled: true, params: Object.fromEntries(s.params.map((p) => [p.key, p.default])) }]),
+      STRATEGIES.map((s) => [
+        s.id,
+        { enabled: true, params: Object.fromEntries(s.params.map((p) => [p.key, p.default])) },
+      ]),
     ),
   };
 }
@@ -62,7 +67,12 @@ export const RiskConfigSchema = z.object({
 });
 
 const marketRecord = <T extends z.ZodTypeAny>(schema: T) =>
-  z.object(Object.fromEntries(MARKET_IDS.map((m) => [m, schema.optional()])) as Record<MarketId, z.ZodOptional<T>>);
+  z.object(
+    Object.fromEntries(MARKET_IDS.map((m) => [m, schema.optional()])) as Record<
+      MarketId,
+      z.ZodOptional<T>
+    >,
+  );
 
 /** PUT /api/settings accepts a partial update; fields left out are kept. */
 export const SettingsPatchSchema = z
@@ -74,7 +84,10 @@ export const SettingsPatchSchema = z
     strategies: z
       .record(
         z.string(),
-        z.object({ enabled: z.boolean().optional(), params: z.record(z.string(), z.number().finite()).optional() }),
+        z.object({
+          enabled: z.boolean().optional(),
+          params: z.record(z.string(), z.number().finite()).optional(),
+        }),
       )
       .optional(),
   })
@@ -95,7 +108,10 @@ export function applySettingsPatch(current: Settings, patch: SettingsPatch): Set
   for (const [id, s] of Object.entries(patch.strategies ?? {})) {
     if (!STRATEGIES.some((x) => x.id === id)) throw new Error(`Unknown strategy: ${id}`);
     const cur = next.strategies[id] ?? { enabled: true, params: {} };
-    next.strategies[id] = { enabled: s.enabled ?? cur.enabled, params: { ...cur.params, ...(s.params ?? {}) } };
+    next.strategies[id] = {
+      enabled: s.enabled ?? cur.enabled,
+      params: { ...cur.params, ...(s.params ?? {}) },
+    };
   }
   return next;
 }
@@ -113,7 +129,10 @@ export function withSettingDefaults(stored: Partial<Settings> | null | undefined
     strategies: Object.fromEntries(
       Object.entries(d.strategies).map(([id, s]) => [
         id,
-        { enabled: stored.strategies?.[id]?.enabled ?? s.enabled, params: { ...s.params, ...(stored.strategies?.[id]?.params ?? {}) } },
+        {
+          enabled: stored.strategies?.[id]?.enabled ?? s.enabled,
+          params: { ...s.params, ...(stored.strategies?.[id]?.params ?? {}) },
+        },
       ]),
     ),
   };

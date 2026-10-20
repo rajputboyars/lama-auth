@@ -31,7 +31,8 @@ export interface RiskInput {
   costBuffer?: number;
 }
 
-export type RiskBlock = 'kill_switch' | 'daily_loss_limit' | 'max_positions' | 'no_cash' | 'no_position' | 'too_small';
+export type RiskBlock =
+  'kill_switch' | 'daily_loss_limit' | 'max_positions' | 'no_cash' | 'no_position' | 'too_small';
 
 export type RiskDecision =
   | { allowed: true; quantity: number; reason: string }
@@ -47,7 +48,8 @@ export function evaluate(input: RiskInput, cfg: RiskConfig): RiskDecision {
 
   if (input.action === 'sell') {
     // Exits are always allowed: closing a position can only reduce risk.
-    if (input.heldQuantity <= 0) return { allowed: false, block: 'no_position', reason: 'Nothing to sell' };
+    if (input.heldQuantity <= 0)
+      return { allowed: false, block: 'no_position', reason: 'Nothing to sell' };
     return { allowed: true, quantity: input.heldQuantity, reason: 'Exit full position' };
   }
 
@@ -60,7 +62,11 @@ export function evaluate(input: RiskInput, cfg: RiskConfig): RiskDecision {
     };
   }
   if (input.heldQuantity <= 0 && input.openPositions >= cfg.maxOpenPositions) {
-    return { allowed: false, block: 'max_positions', reason: `Max open positions (${cfg.maxOpenPositions}) reached` };
+    return {
+      allowed: false,
+      block: 'max_positions',
+      reason: `Max open positions (${cfg.maxOpenPositions}) reached`,
+    };
   }
 
   let budget = (input.equity * cfg.maxTradePct) / 100;
@@ -69,6 +75,7 @@ export function evaluate(input: RiskInput, cfg: RiskConfig): RiskDecision {
   if (budget <= 0) return { allowed: false, block: 'no_cash', reason: 'No free cash' };
 
   const quantity = budget / input.price;
-  if (!(quantity > 0) || budget < 1) return { allowed: false, block: 'too_small', reason: 'Trade size too small' };
+  if (!(quantity > 0) || budget < 1)
+    return { allowed: false, block: 'too_small', reason: 'Trade size too small' };
   return { allowed: true, quantity, reason: `Size ${budget.toFixed(2)} (${cfg.maxTradePct}% cap)` };
 }

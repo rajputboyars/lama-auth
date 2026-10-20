@@ -21,7 +21,15 @@ export function createAdapters(env: Env): Map<MarketId, MarketAdapter> {
     }
   };
 
-  tryAdd('crypto', () => new CryptoAdapter(createExchanges(env.CRYPTO_EXCHANGES), env.CRYPTO_SYMBOLS, DEFAULT_COSTS.crypto));
+  tryAdd(
+    'crypto',
+    () =>
+      new CryptoAdapter(
+        createExchanges(env.CRYPTO_EXCHANGES),
+        env.CRYPTO_SYMBOLS,
+        DEFAULT_COSTS.crypto,
+      ),
+  );
 
   tryAdd('us', () => {
     const provider =

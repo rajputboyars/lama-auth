@@ -28,14 +28,20 @@ export interface Strategy {
   /** False when the strategy cannot be replayed from single-venue candles. */
   backtestable: boolean;
   minCandles(params: Params): number;
-  check(candles: Candle[], position: Position | null, params?: Params, ctx?: StrategyContext): Signal;
+  check(
+    candles: Candle[],
+    position: Position | null,
+    params?: Params,
+    ctx?: StrategyContext,
+  ): Signal;
 }
 
 export function withDefaults(specs: ParamSpec[], params: Params = {}): Params {
   const out: Params = {};
   for (const s of specs) {
     const v = params[s.key];
-    out[s.key] = typeof v === 'number' && Number.isFinite(v) ? Math.min(s.max, Math.max(s.min, v)) : s.default;
+    out[s.key] =
+      typeof v === 'number' && Number.isFinite(v) ? Math.min(s.max, Math.max(s.min, v)) : s.default;
   }
   return out;
 }

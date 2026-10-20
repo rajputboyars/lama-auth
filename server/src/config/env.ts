@@ -1,5 +1,8 @@
-import 'dotenv/config';
+import { config } from 'dotenv';
 import { z } from 'zod';
+
+// Works whether started from the repo root or from server/ (npm workspaces run in server/).
+config({ path: ['.env', '../.env'], quiet: true });
 
 const csv = (fallback: string) =>
   z
