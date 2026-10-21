@@ -23,7 +23,8 @@ export interface AppDeps {
   game: Pick<GameService, 'record' | 'profile' | 'achievements' | 'quests'>;
   adapters: Map<MarketId, MarketAdapter>;
   auth: AuthConfig;
-  clientOrigin: string;
+  /** Allowed browser origins for CORS (the dashboard's address). */
+  clientOrigin: string | string[];
   /** Same bad-tick filter the engine uses, applied to chart candles. */
   maxTickJumpPct?: number;
 }

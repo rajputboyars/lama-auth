@@ -50,6 +50,14 @@ The dashboard is written in plain language, in Simple English or Hinglish (switc
 
 **Bot Auto-Pilot** (`strategies/autoPilot.ts`) reads the market mood on every candle (`strategies/regime.ts`): uptrend → Trend Rider, sideways → Rubber Band, squeeze (unusually narrow Bollinger bands) → Breakout Hunter, downtrend or unclear → stay out. It sells a held position as soon as the mood turns into a downtrend. **Your Pick** (`strategies/yourPick.ts`) runs whatever you chose for that market (`settings.duel`). API: `GET /api/duel`, `PUT /api/duel/:market`, `POST /api/duel/:market/reset`, `GET /api/chart/:market/:symbol`.
 
+### Deploy the dashboard on Vercel
+
+Vercel hosts only the dashboard (static files). The API server with the bot, MongoDB and live prices must run somewhere that keeps a process alive (your Docker host, a VPS, Render, Railway, Fly.io…).
+
+1. In Vercel, import the repo and set **Root Directory** to `client` (`client/vercel.json` sets the build and page routing).
+2. Add the environment variable `VITE_API_URL` = your API server's public URL, e.g. `https://api.example.com`.
+3. On the API server, add the Vercel address to `CLIENT_ORIGIN` (comma-separated), e.g. `CLIENT_ORIGIN=http://localhost:5173,https://your-app.vercel.app`, and restart it.
+
 ## Markets
 
 | Market                     | Adapter              | Data                                                      | Keys needed                                                                                     |

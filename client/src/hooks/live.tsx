@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { type Socket, io } from 'socket.io-client';
 import type { BotStatus, PriceUpdate, Trade } from '../lib/types';
+import { API_URL } from '../lib/api';
 import { playTradeSound } from '../lib/sound';
 
 export interface Toast {
@@ -75,7 +76,8 @@ export function LiveProvider({ token, children }: { token: string; children: Rea
   }, []);
 
   useEffect(() => {
-    const socket: Socket = io({ auth: { token }, transports: ['websocket', 'polling'] });
+    const opts = { auth: { token }, transports: ['websocket', 'polling'] };
+    const socket: Socket = API_URL ? io(API_URL, opts) : io(opts);
     socket.on('connect', () => setConnected(true));
     socket.on('disconnect', () => setConnected(false));
     socket.on('bot:status', setStatus);

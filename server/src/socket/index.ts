@@ -13,7 +13,7 @@ export function attachSocket(
   engine: BotEngine,
   game: GameService,
   jwtSecret: string,
-  origin: string,
+  origin: string | string[],
 ) {
   const io = new Server(http, { cors: { origin } });
   io.use((socket, next) => {

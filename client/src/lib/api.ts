@@ -1,5 +1,11 @@
 const TOKEN_KEY = 'paperbot.token';
 
+/**
+ * Where the API server lives. Empty (the default) means the same site, as with Docker/nginx.
+ * Set VITE_API_URL when the dashboard is hosted apart from the API, e.g. on Vercel.
+ */
+export const API_URL = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '');
+
 export function getToken(): string | null {
   try {
     return localStorage.getItem(TOKEN_KEY);
@@ -34,7 +40,7 @@ export async function api<T>(
   init: { method?: string; body?: unknown } = {},
 ): Promise<T> {
   const token = getToken();
-  const res = await fetch(`/api${path}`, {
+  const res = await fetch(`${API_URL}/api${path}`, {
     method: init.method ?? 'GET',
     headers: {
       ...(init.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
