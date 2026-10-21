@@ -37,6 +37,19 @@ docker compose up -d --build          # Mongo + API (:4000) + dashboard on http:
 
 The dashboard container is nginx serving the built client and proxying `/api` and `/socket.io` to the API container. If port 27017 is taken, set `MONGO_HOST_PORT` in `.env`.
 
+## Pages for beginners
+
+The dashboard is written in plain language, in Simple English or Hinglish (switch in the header), on a light screen with a dark toggle. Words with a dotted underline show a short meaning on hover or tap, with a link to the full explanation.
+
+| Page        | What it does                                                                                                                                                                            |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Live Charts | Candles, OHLC bars, Heikin-Ashi, line, area and baseline charts; 1m to 1d candles; volume, moving averages and Bollinger bands; arrows where the bot traded; updates on every live tick |
+| You vs Bot  | Pick a strategy per market from a dropdown. The bot runs **Bot Auto-Pilot**. Both have their own wallets; live P&L, a balance race chart and a match reset                              |
+| Terms       | 50+ trading words, each with a meaning, an example with numbers and why it matters                                                                                                      |
+| Strategies  | How each strategy decides, which market mood suits it, when it struggles, and the live mood per market                                                                                  |
+
+**Bot Auto-Pilot** (`strategies/autoPilot.ts`) reads the market mood on every candle (`strategies/regime.ts`): uptrend → Trend Rider, sideways → Rubber Band, squeeze (unusually narrow Bollinger bands) → Breakout Hunter, downtrend or unclear → stay out. It sells a held position as soon as the mood turns into a downtrend. **Your Pick** (`strategies/yourPick.ts`) runs whatever you chose for that market (`settings.duel`). API: `GET /api/duel`, `PUT /api/duel/:market`, `POST /api/duel/:market/reset`, `GET /api/chart/:market/:symbol`.
+
 ## Markets
 
 | Market                     | Adapter              | Data                                                      | Keys needed                                                                                     |

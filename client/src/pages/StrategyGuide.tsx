@@ -125,7 +125,11 @@ export function StrategyGuide() {
                   </h2>
                   <p className="mt-1 text-muted-foreground">{pick(s.oneLiner)}</p>
                 </div>
-                {s.id === 'auto' && <Badge variant="info">{t('guide.theBot')}</Badge>}
+                {s.id === 'auto' && (
+                  <Badge variant="info" className="shrink-0 whitespace-nowrap">
+                    {t('guide.theBot')}
+                  </Badge>
+                )}
               </div>
               <PatternArt pattern={s.pattern} />
               <p className="text-sm italic text-muted-foreground">“{pick(s.analogy)}”</p>

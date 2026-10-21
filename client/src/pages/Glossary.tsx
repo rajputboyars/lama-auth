@@ -77,6 +77,12 @@ export function Glossary() {
     return () => ctx.revert();
   }, [visible.length, category]);
 
+  // Opening or closing terms moves everything below; re-measure once the accordion settles.
+  useEffect(() => {
+    const timer = setTimeout(() => ScrollTrigger.refresh(), 250);
+    return () => clearTimeout(timer);
+  }, [open]);
+
   const groups = CATEGORIES.map((c) => ({
     ...c,
     terms: visible.filter((x) => x.category === c.id),

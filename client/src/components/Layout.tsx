@@ -80,7 +80,9 @@ function Brand() {
         <div className="font-display text-base font-extrabold tracking-tight">
           {t('brand.name')}
         </div>
-        <div className="text-[11px] text-muted-foreground">{t('brand.tagline')}</div>
+        <div className="hidden text-[11px] text-muted-foreground sm:block">
+          {t('brand.tagline')}
+        </div>
       </div>
     </div>
   );
@@ -96,13 +98,14 @@ function Preferences({ className }: { className?: string }) {
         value={lang}
         onValueChange={(v) => v && setLang(v as Lang)}
         aria-label={t('pref.language')}
-        className="p-0.5"
+        className="flex-nowrap p-0.5"
       >
         <ToggleGroupItem value="en" className="h-7 px-2.5">
           EN
         </ToggleGroupItem>
-        <ToggleGroupItem value="hinglish" className="h-7 px-2.5">
-          Hinglish
+        <ToggleGroupItem value="hinglish" className="h-7 px-2.5" aria-label="Hinglish">
+          <span className="sm:hidden">HI</span>
+          <span className="hidden sm:inline">Hinglish</span>
         </ToggleGroupItem>
       </ToggleGroup>
       <Button
