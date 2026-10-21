@@ -413,6 +413,7 @@ export const en = {
   'dash.hero.label': 'Your practice money',
   'dash.gauge.title': 'Your trading level',
   'dash.gauge.hint': 'Grows with good habits: tests, reviews, safe days.',
+  'dash.gauge.level': 'Level',
   'dash.gauge.toNext': 'to level {n}',
   'dash.gauge.quests': "today's quests",
   'dash.gauge.badges': 'badges',

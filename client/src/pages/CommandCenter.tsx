@@ -136,7 +136,7 @@ export function CommandCenter() {
       <ErrorNote error={stats.error} />
 
       <div className="grid gap-6 lg:grid-cols-12">
-        <div className="space-y-6 lg:col-span-5">
+        <div className="space-y-6 lg:col-span-6">
           <HeroBalance
             equity={total?.equity ?? 0}
             pnl={total?.pnl ?? 0}
@@ -146,7 +146,7 @@ export function CommandCenter() {
           />
           <BotControls />
         </div>
-        <div className="lg:col-span-7">
+        <div className="lg:col-span-6">
           <LevelGauge
             level={profile.data?.level ?? 1}
             progressPct={profile.data?.progressPct ?? 0}

@@ -27,12 +27,12 @@ export function HeroBalance({
 }) {
   const { t } = useLang();
   // Last few balance points as bars, scaled to their own range so small moves still show.
-  const pts = curve.slice(-6).map((p) => p.equity);
-  const lo = Math.min(...pts, equity);
-  const hi = Math.max(...pts, equity);
-  const bars = (pts.length ? pts : [equity]).map(
-    (v) => 0.25 + (hi === lo ? 0.5 : ((v - lo) / (hi - lo)) * 0.75),
-  );
+  // Always six bars: pad the front with the oldest value when history is short.
+  const tail = [...curve.slice(-5).map((p) => p.equity), equity];
+  const pts = [...Array(Math.max(0, 6 - tail.length)).fill(tail[0]), ...tail];
+  const lo = Math.min(...pts);
+  const hi = Math.max(...pts);
+  const bars = pts.map((v) => 0.25 + (hi === lo ? 0.5 : ((v - lo) / (hi - lo)) * 0.75));
   return (
     <motion.section
       initial={{ opacity: 0, y: 16, rotate: -1 }}
@@ -44,7 +44,7 @@ export function HeroBalance({
         <Wallet className="h-6 w-6" />
       </span>
       <div>
-        <div className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">
+        <div className="num pr-16 font-display text-[clamp(1.9rem,3.2vw,3rem)] font-extrabold leading-tight tracking-tight">
           <AnimatedMoney value={equity} currency={currency} />
         </div>
         <div
@@ -59,12 +59,12 @@ export function HeroBalance({
         </div>
       </div>
       <div className="flex items-end justify-between gap-4">
-        <div className="max-w-[10rem] font-display text-xl font-semibold leading-tight md:text-2xl">
+        <div className="font-display text-xl font-semibold leading-tight md:text-2xl">
           <Term id="equity" className="decoration-current/40">
             {t('dash.hero.label')}
           </Term>
         </div>
-        <div className="flex h-20 items-end gap-2" aria-hidden>
+        <div className="flex h-20 shrink-0 items-end gap-1.5" aria-hidden>
           {bars.map((h, i) => (
             <motion.span
               key={i}
@@ -72,7 +72,7 @@ export function HeroBalance({
               animate={{ height: `${h * 100}%` }}
               transition={{ delay: 0.3 + i * 0.07, type: 'spring', stiffness: 160, damping: 18 }}
               className={cn(
-                'w-5 rounded-lg',
+                'w-4 rounded-lg md:w-5',
                 i === bars.length - 1 ? 'bg-[hsl(248_70%_55%)]' : 'bg-[hsl(262_80%_70%/0.75)]',
               )}
             />
@@ -184,8 +184,21 @@ export function LevelGauge({
             animate={{ strokeDashoffset: Math.PI * 70 * (1 - q) }}
             transition={{ duration: 1.2, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
           />
+          <text x="120" y="98" textAnchor="middle" fontSize="11" className="fill-muted-foreground">
+            {t('dash.gauge.level')}
+          </text>
+          <text
+            x="120"
+            y="124"
+            textAnchor="middle"
+            fontSize="30"
+            fontWeight="800"
+            className="fill-foreground font-display"
+          >
+            {level}
+          </text>
         </svg>
-        <div className="absolute inset-x-0 bottom-0 flex items-end justify-center gap-6 pb-1">
+        <div className="mt-3 flex items-end justify-center gap-6 sm:gap-10">
           <GaugeStat
             value={`${Math.round(p * 100)}%`}
             label={t('dash.gauge.toNext', { n: level + 1 })}

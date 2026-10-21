@@ -421,6 +421,7 @@ export const hinglish: Record<keyof typeof en, string> = {
   'dash.hero.label': 'Aapka practice paisa',
   'dash.gauge.title': 'Aapka trading level',
   'dash.gauge.hint': 'Achhi aadaton se badhta hai: tests, reviews, safe din.',
+  'dash.gauge.level': 'Level',
   'dash.gauge.toNext': 'level {n} tak',
   'dash.gauge.quests': 'aaj ke quests',
   'dash.gauge.badges': 'badges',
