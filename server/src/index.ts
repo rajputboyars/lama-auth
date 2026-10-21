@@ -66,6 +66,7 @@ async function main() {
     clientOrigin: env.CLIENT_ORIGIN,
     maxTickJumpPct: env.MAX_TICK_JUMP_PCT,
     trustProxy: env.TRUST_PROXY,
+    staticDir: env.STATIC_DIR,
   });
   const http = createServer(app);
   const io = attachSocket(http, engine, game, jwtSecret, env.CLIENT_ORIGIN);

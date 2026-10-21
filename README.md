@@ -50,16 +50,19 @@ The dashboard is written in plain language, in Simple English or Hinglish (switc
 
 **Bot Auto-Pilot** (`strategies/autoPilot.ts`) reads the market mood on every candle (`strategies/regime.ts`): uptrend → Trend Rider, sideways → Rubber Band, squeeze (unusually narrow Bollinger bands) → Breakout Hunter, downtrend or unclear → stay out. It sells a held position as soon as the mood turns into a downtrend. **Your Pick** (`strategies/yourPick.ts`) runs whatever you chose for that market (`settings.duel`). API: `GET /api/duel`, `PUT /api/duel/:market`, `POST /api/duel/:market/reset`, `GET /api/chart/:market/:symbol`.
 
-### Deploy online (Vercel dashboard + Render API)
+### Deploy online (one service on Render)
 
-Vercel only hosts the dashboard files. The API (bot engine, database and live sockets) runs on Render, using the `render.yaml` blueprint in this repo.
+The root `Dockerfile` builds the dashboard and the API into one image: the API also serves the dashboard, so the whole app lives at one URL with no CORS or API-address setup. The bot keeps running in the same process. Only the database is separate.
 
 1. **Database:** create a free cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas). Add a database user, allow network access from `0.0.0.0/0`, and copy the connection string, e.g. `mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/paperbot`.
 2. **Password hash:** run `npm run hash-password -w server -- "your-password"`, or reuse `ADMIN_PASSWORD_HASH` from your local `.env` to keep the same password.
-3. **API on Render:** New → Blueprint → pick this repo. Fill in `MONGO_URI`, `ADMIN_PASSWORD_HASH` and `CLIENT_ORIGIN` (your Vercel address, e.g. `https://your-app.vercel.app`). Render generates `JWT_SECRET`. When it is live, check `https://<your-service>.onrender.com/api/health`.
-4. **Dashboard on Vercel:** Root Directory `client`; add `VITE_API_URL` = the Render URL (no trailing slash) and redeploy. Vite builds the value in, so changing it always needs a redeploy.
+3. **Render:** New → Blueprint → pick this repo (`render.yaml`). Fill in `MONGO_URI` and `ADMIN_PASSWORD_HASH`; Render generates `JWT_SECRET`. Open the service URL, e.g. `https://paper-trading-coach.onrender.com`, and log in.
 
-On Render's free plan the API sleeps after about 15 minutes without visits, which pauses the bot. The first visit then takes up to a minute to wake it, and the bot resumes on its own.
+On Render's free plan the service sleeps after about 15 minutes without visits, which pauses the bot. The first visit then takes up to a minute to wake it, and the bot resumes on its own.
+
+To run the same single image locally: `docker build -t paperbot .`, then run it with `MONGO_URI`, `JWT_SECRET` and `ADMIN_PASSWORD_HASH` set and port 4000 published.
+
+The dashboard can still be hosted on its own (e.g. Vercel, Root Directory `client`) by setting `VITE_API_URL` to the API's URL and adding the dashboard's address to the API's `CLIENT_ORIGIN`.
 
 ## Markets
 
