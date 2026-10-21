@@ -9,8 +9,10 @@ import type { GameService } from '../game/gameService.js';
 import { STRATEGIES, getStrategy } from '../strategies/index.js';
 import { runBacktest } from '../services/backtester.js';
 import { leaderboard, summarize } from '../services/portfolio.js';
-import { SettingsPatchSchema, applySettingsPatch } from '../services/settings.js';
-import type { Store } from '../store/types.js';
+import { cleanCandles } from '../services/dataGuard.js';
+import { DuelPickSchema, SettingsPatchSchema, applySettingsPatch } from '../services/settings.js';
+import type { Store, TradeRecord } from '../store/types.js';
+import type { Candle } from '../types.js';
 import { MARKET_IDS, type MarketId } from '../types.js';
 import { type AuthConfig, login, requireAuth } from './auth.js';
 import { HttpError, ah, errorHandler, parse } from './http.js';
@@ -22,7 +24,13 @@ export interface AppDeps {
   adapters: Map<MarketId, MarketAdapter>;
   auth: AuthConfig;
   clientOrigin: string;
+  /** Same bad-tick filter the engine uses, applied to chart candles. */
+  maxTickJumpPct?: number;
 }
+
+/** You vs Bot wallets: the user's pick and the bot's Auto-Pilot. */
+const DUEL_STRATEGIES = ['user', 'auto'];
+const CHART_CACHE_MS = 15_000;
 
 const Market = z.enum(MARKET_IDS as [MarketId, ...MarketId[]]);
 const Page = z.coerce.number().int().min(1).max(10_000).default(1);
@@ -68,6 +76,11 @@ export const BacktestSchema = z
     seed: z.number().int().optional(),
   })
   .refine((b) => b.to > b.from, { message: '`to` must be after `from`' });
+
+const ChartQuery = z.object({
+  interval: Interval.default('1m'),
+  limit: z.coerce.number().int().min(10).max(1000).default(300),
+});
 
 const ResetSchema = z.object({
   market: Market.optional(),
@@ -308,6 +321,94 @@ export function createApp(deps: AppDeps) {
       }
       await game.record({ type: 'backtest_run', market: b.market, strategy: strategy.id });
       res.json({ ...result, source, candles: candles.length, currency });
+    }),
+  );
+
+  // ---- Live charts ----
+  const chartCache = new Map<string, { at: number; candles: Candle[] }>();
+  api.get(
+    '/chart/:market/:symbol',
+    ah(async (req, res) => {
+      const market = parse(Market, req.params.market);
+      const symbol = String(req.params.symbol);
+      const q = parse(ChartQuery, req.query);
+      const key = `${market}:${symbol}:${q.interval}:${q.limit}`;
+      const hit = chartCache.get(key);
+      if (hit && Date.now() - hit.at < CHART_CACHE_MS) return void res.json(hit.candles);
+
+      const adapter = adapters.get(market);
+      let candles: Candle[];
+      try {
+        if (!adapter) throw new Error('market not configured');
+        const raw = await adapter.getCandles(symbol, q.interval, q.limit);
+        candles = cleanCandles(raw, deps.maxTickJumpPct ?? 10);
+      } catch (err) {
+        candles = await store.getCandles(market, symbol, q.interval, undefined, undefined, q.limit);
+        if (candles.length === 0)
+          throw new HttpError(502, `Could not load candles for ${symbol}: ${String(err)}`);
+      }
+      chartCache.set(key, { at: Date.now(), candles });
+      res.json(candles);
+    }),
+  );
+
+  // ---- You vs Bot ----
+  api.get(
+    '/duel',
+    ah(async (_req, res) => {
+      const settings = await store.getSettings();
+      const wallets = (await store.listWallets()).filter((w) =>
+        DUEL_STRATEGIES.includes(w.strategy),
+      );
+      const trades: TradeRecord[] = [];
+      for (const strategy of DUEL_STRATEGIES)
+        trades.push(
+          ...(await store.listTrades({ strategy, status: 'filled', page: 1, pageSize: 5000 }))
+            .items,
+        );
+      const rows = summarize(wallets, trades, engine.latestPrices()).strategies;
+      const row = (m: MarketId, s: string) =>
+        rows.find((r) => r.market === m && r.strategy === s) ?? null;
+      res.json(
+        [...adapters.values()].map((a) => ({
+          market: a.id,
+          name: a.name,
+          currency: a.currency,
+          open: a.isOpen(),
+          enabled: settings.markets[a.id]?.enabled ?? false,
+          userStrategy: settings.duel[a.id].userStrategy,
+          you: row(a.id, 'user'),
+          bot: row(a.id, 'auto'),
+          moods: engine.moodsFor(a.id),
+          history: {
+            you: engine.equitySamples(a.id, 'user'),
+            bot: engine.equitySamples(a.id, 'auto'),
+          },
+        })),
+      );
+    }),
+  );
+
+  api.put(
+    '/duel/:market',
+    ah(async (req, res) => {
+      const market = parse(Market, req.params.market);
+      const pick = parse(DuelPickSchema, req.body);
+      const next = applySettingsPatch(await store.getSettings(), { duel: { [market]: pick } });
+      await store.saveSettings(next);
+      res.json({ market, userStrategy: next.duel[market].userStrategy });
+    }),
+  );
+
+  api.post(
+    '/duel/:market/reset',
+    ah(async (req, res) => {
+      const market = parse(Market, req.params.market);
+      if (engine.isRunning()) throw new HttpError(409, 'Stop the bot before resetting the match');
+      let n = 0;
+      for (const strategy of DUEL_STRATEGIES) n += await store.resetWallets({ market, strategy });
+      engine.clearEquitySamples(market, DUEL_STRATEGIES);
+      res.json({ reset: n });
     }),
   );
 

@@ -50,8 +50,22 @@ export interface RiskBreachEvent {
   block: RiskBlock;
 }
 
+export interface MoodReading {
+  mood: string;
+  /** Strategy Auto-Pilot handed this symbol to, or 'none' when it stays out. */
+  chosen: string;
+  reason: string;
+  time: number;
+}
+
+export interface EquitySample {
+  time: number;
+  equity: number;
+}
+
 const dayKey = (ms: number) => new Date(ms).toISOString().slice(0, 10);
 const MAX_BACKOFF_FACTOR = 16;
+const EQUITY_HISTORY = 500;
 
 /**
  * Runs one independent loop per market. A failing market backs off and keeps retrying
@@ -63,6 +77,10 @@ export class BotEngine extends EventEmitter {
   private readonly lastPrice = new Map<string, number>();
   private readonly breachedToday = new Set<string>();
   private readonly states = new Map<MarketId, MarketState>();
+  /** Latest Auto-Pilot market mood per `market:symbol`. */
+  private readonly moods = new Map<string, MoodReading>();
+  /** Recent marked-to-market equity per `market:strategy` wallet (in memory only). */
+  private readonly equityHistory = new Map<string, EquitySample[]>();
   private running = false;
   private readonly rng: () => number;
   private readonly sleep: (ms: number) => Promise<void>;
@@ -86,6 +104,22 @@ export class BotEngine extends EventEmitter {
 
   latestPrices(): Record<string, number> {
     return Object.fromEntries(this.lastPrice);
+  }
+
+  /** Auto-Pilot's latest mood reading for each symbol of a market. */
+  moodsFor(market: MarketId): Record<string, MoodReading> {
+    const prefix = `${market}:`;
+    const out: Record<string, MoodReading> = {};
+    for (const [k, v] of this.moods) if (k.startsWith(prefix)) out[k.slice(prefix.length)] = v;
+    return out;
+  }
+
+  equitySamples(market: MarketId, strategy: string): EquitySample[] {
+    return this.equityHistory.get(`${market}:${strategy}`) ?? [];
+  }
+
+  clearEquitySamples(market: MarketId, strategies: string[]) {
+    for (const s of strategies) this.equityHistory.delete(`${market}:${s}`);
   }
 
   async status(): Promise<BotStatus> {
@@ -250,7 +284,21 @@ export class BotEngine extends EventEmitter {
         ? await adapter.getVenueQuotes(symbol)
         : undefined;
 
-    const signal = strategy.check(candles, position, params, { venueQuotes, costs });
+    const signal = strategy.check(candles, position, params, {
+      venueQuotes,
+      costs,
+      strategyParams: Object.fromEntries(
+        Object.entries(settings.strategies).map(([id, s]) => [id, s.params]),
+      ),
+      userStrategyId: settings.duel[adapter.id]?.userStrategy,
+    });
+    if (signal.meta?.mood)
+      this.moods.set(`${adapter.id}:${symbol}`, {
+        mood: signal.meta.mood,
+        chosen: signal.meta.chosen ?? 'none',
+        reason: signal.reason,
+        time: this.now(),
+      });
     if (signal.action === 'wait') return;
 
     const base: SignalRecord = {
@@ -464,6 +512,11 @@ export class BotEngine extends EventEmitter {
       const eq = equity(w, prices);
       const updated: WalletRecord = { ...w, ...updateDrawdown(w, eq) };
       await this.store.saveWallet(updated);
+      const key = `${adapter.id}:${s.id}`;
+      const hist = this.equityHistory.get(key) ?? [];
+      hist.push({ time: this.now(), equity: eq });
+      if (hist.length > EQUITY_HISTORY) hist.splice(0, hist.length - EQUITY_HISTORY);
+      this.equityHistory.set(key, hist);
       this.emit('wallet:update', { ...updated, equity: eq });
     }
   }
