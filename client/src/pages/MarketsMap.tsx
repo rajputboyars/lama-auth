@@ -1,11 +1,16 @@
 import { motion } from 'framer-motion';
+import { ChartCandlestick } from 'lucide-react';
 import { useState } from 'react';
-import { Badge, ErrorNote, LiveDot, Toggle } from '../components/ui';
-import { useApi } from '../hooks/useApi';
-import { useLive } from '../hooks/live';
-import { api } from '../lib/api';
-import { money, price } from '../lib/format';
-import type { MarketInfo, Stats } from '../lib/types';
+import { Link } from 'react-router-dom';
+import { Term } from '@/components/Term';
+import { Badge, ErrorNote, LiveDot, Note, PageHeader, Toggle } from '@/components/common';
+import { useApi } from '@/hooks/useApi';
+import { useLive } from '@/hooks/live';
+import { type TKey, useLang } from '@/i18n';
+import { api } from '@/lib/api';
+import { money, price } from '@/lib/format';
+import type { MarketInfo, Stats } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 const ICON: Record<string, string> = { crypto: '₿', us: '🇺🇸', india: '🇮🇳', global: '🌐' };
 
@@ -13,6 +18,7 @@ export function MarketsMap() {
   const markets = useApi<MarketInfo[]>('/markets', { pollMs: 30_000 });
   const stats = useApi<Stats>('/stats', { pollMs: 30_000 });
   const { prices } = useLive();
+  const { t } = useLang();
   const [error, setError] = useState<string | null>(null);
 
   async function toggle(m: MarketInfo, enabled: boolean) {
@@ -26,8 +32,8 @@ export function MarketsMap() {
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="font-display text-2xl font-black tracking-wide md:text-3xl">Markets Map</h1>
+    <div className="space-y-6">
+      <PageHeader title={t('markets.title')} intro={t('markets.intro')} />
       <ErrorNote error={markets.error ?? error} />
       <div className="grid gap-4 md:grid-cols-2">
         {(markets.data ?? []).map((m, i) => {
@@ -37,52 +43,70 @@ export function MarketsMap() {
           return (
             <motion.article
               key={m.id}
-              initial={{ opacity: 0, scale: 0.97 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
-              className={`panel ${m.enabled && m.open ? 'border-neon-cyan/40' : ''}`}
+              className={cn('panel', m.enabled && m.open && 'ring-1 ring-win/30')}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="text-3xl" aria-hidden>
+                  <span
+                    className="grid h-12 w-12 place-items-center rounded-2xl bg-card text-2xl shadow-neu-sm"
+                    aria-hidden
+                  >
                     {ICON[m.id]}
                   </span>
                   <div>
                     <h2 className="font-display text-lg font-bold">{m.name}</h2>
-                    <div className="mt-1 flex flex-wrap gap-2">
-                      <LiveDot on={m.open} label={m.open ? 'Market open' : 'Market closed'} />
+                    <div className="mt-1 flex flex-wrap items-center gap-2">
+                      <LiveDot
+                        on={m.open}
+                        label={m.open ? t('markets.open') : t('markets.closed')}
+                      />
                       {m.state && (
                         <Badge tone={m.state.status === 'error' ? 'loss' : 'slate'}>
-                          {m.state.status}
+                          {t(`mstatus.${m.state.status}` as TKey)}
                         </Badge>
                       )}
                     </div>
                   </div>
                 </div>
-                <Toggle
-                  checked={m.enabled}
-                  onChange={(v) => toggle(m, v)}
-                  label={`Trade ${m.name}`}
-                />
+                <label className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
+                  <Toggle
+                    checked={m.enabled}
+                    onChange={(v) => toggle(m, v)}
+                    label={t('markets.trade', { name: m.name })}
+                  />
+                  {m.enabled ? t('markets.on') : t('markets.off')}
+                </label>
               </div>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {t(`markets.about.${m.id}` as TKey)}
+              </p>
               {m.state?.lastError && (
-                <p className="mt-2 text-xs text-loss">Last error: {m.state.lastError}</p>
+                <p className="mt-2 text-xs text-loss">
+                  {t('markets.lastError')} {m.state.lastError}
+                </p>
               )}
               <div className="mt-4 flex items-baseline justify-between">
-                <span className="label">Balance ({m.currency})</span>
-                <span className="num text-xl font-semibold">{money(balance, m.currency)}</span>
+                <span className="text-sm text-muted-foreground">
+                  <Term id="equity">{t('markets.balance', { cur: m.currency })}</Term>
+                </span>
+                <span className="num text-xl font-bold">{money(balance, m.currency)}</span>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 {m.symbols.map((s) => {
                   const p = prices[`${m.id}:${s}`];
                   return (
-                    <span
+                    <Link
                       key={s}
-                      className="rounded-lg border border-edge bg-void/60 px-2 py-1 text-xs"
+                      to={`/charts?market=${m.id}&symbol=${encodeURIComponent(s)}`}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs shadow-neu-sm transition hover:text-primary active:shadow-neu-inset"
                     >
-                      <span className="font-semibold">{s}</span>{' '}
-                      <span className="num text-slate-400">{p ? price(p.price) : '—'}</span>
-                    </span>
+                      <ChartCandlestick className="h-3.5 w-3.5" />
+                      <span className="font-semibold">{s}</span>
+                      <span className="num text-muted-foreground">{p ? price(p.price) : '—'}</span>
+                    </Link>
                   );
                 })}
               </div>
@@ -90,10 +114,11 @@ export function MarketsMap() {
           );
         })}
       </div>
-      <p className="text-xs text-slate-500">
-        Market hours are checked in each exchange's timezone. Exchange holidays are not modelled
-        yet. Yahoo data is delayed.
-      </p>
+      <Note>
+        <p>
+          {t('markets.footer')} <Term id="delayed-data">{t('markets.delayed')}</Term>
+        </p>
+      </Note>
     </div>
   );
 }

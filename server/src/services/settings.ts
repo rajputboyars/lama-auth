@@ -3,6 +3,7 @@ import { STRATEGIES } from '../strategies/index.js';
 import { MARKET_IDS, type MarketId } from '../types.js';
 import { type CostConfig, DEFAULT_COSTS } from './costModel.js';
 import { DEFAULT_RISK, type RiskConfig } from './riskManager.js';
+import { PICKABLE_IDS } from '../strategies/yourPick.js';
 
 export interface StrategySetting {
   enabled: boolean;
@@ -16,7 +17,11 @@ export interface Settings {
   costs: Record<MarketId, CostConfig>;
   markets: Record<MarketId, { enabled: boolean }>;
   strategies: Record<string, StrategySetting>;
+  /** You vs Bot: the strategy the user picked for each market. */
+  duel: Record<MarketId, { userStrategy: string }>;
 }
+
+const DEFAULT_PICK = 'trend';
 
 export function defaultSettings(): Settings {
   return {
@@ -33,8 +38,13 @@ export function defaultSettings(): Settings {
         { enabled: true, params: Object.fromEntries(s.params.map((p) => [p.key, p.default])) },
       ]),
     ),
+    duel: Object.fromEntries(
+      MARKET_IDS.map((m) => [m, { userStrategy: DEFAULT_PICK }]),
+    ) as Settings['duel'],
   };
 }
+
+export const DuelPickSchema = z.object({ userStrategy: z.enum(PICKABLE_IDS) });
 
 const pctNum = z.number().min(0).max(100);
 
@@ -90,6 +100,7 @@ export const SettingsPatchSchema = z
         }),
       )
       .optional(),
+    duel: marketRecord(DuelPickSchema).optional(),
   })
   .strict();
 
@@ -104,6 +115,8 @@ export function applySettingsPatch(current: Settings, patch: SettingsPatch): Set
     if (c) next.costs[m] = c;
     const mk = patch.markets?.[m];
     if (mk) next.markets[m] = mk;
+    const d = patch.duel?.[m];
+    if (d) next.duel[m] = d;
   }
   for (const [id, s] of Object.entries(patch.strategies ?? {})) {
     if (!STRATEGIES.some((x) => x.id === id)) throw new Error(`Unknown strategy: ${id}`);
@@ -126,6 +139,12 @@ export function withSettingDefaults(stored: Partial<Settings> | null | undefined
     risk: { ...d.risk, ...(stored.risk ?? {}) },
     costs: { ...d.costs, ...(stored.costs ?? {}) },
     markets: { ...d.markets, ...(stored.markets ?? {}) },
+    duel: Object.fromEntries(
+      MARKET_IDS.map((m) => {
+        const pick = stored.duel?.[m]?.userStrategy;
+        return [m, { userStrategy: pick && PICKABLE_IDS.includes(pick) ? pick : DEFAULT_PICK }];
+      }),
+    ) as Settings['duel'],
     strategies: Object.fromEntries(
       Object.entries(d.strategies).map(([id, s]) => [
         id,

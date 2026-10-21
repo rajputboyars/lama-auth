@@ -16,6 +16,10 @@ export interface StrategyContext {
   /** Same symbol quoted on several venues (only provided to cross-venue strategies). */
   venueQuotes?: Quote[];
   costs?: CostConfig;
+  /** Saved parameters of every strategy, for strategies that delegate to others. */
+  strategyParams?: Record<string, Params>;
+  /** The strategy the user picked for this market in You vs Bot. */
+  userStrategyId?: string;
 }
 
 export interface Strategy {

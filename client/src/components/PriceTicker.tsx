@@ -1,15 +1,14 @@
-import { useLive } from '../hooks/live';
-import { MARKET_LABEL, price } from '../lib/format';
+import { useLive } from '@/hooks/live';
+import { useLang } from '@/i18n';
+import { MARKET_LABEL, price } from '@/lib/format';
+import { cn } from '@/lib/utils';
 
 export function PriceTicker() {
   const { prices } = useLive();
+  const { t } = useLang();
   const items = Object.values(prices);
   if (items.length === 0) {
-    return (
-      <div className="panel text-sm text-slate-500">
-        Waiting for live prices… start the bot to stream quotes.
-      </div>
-    );
+    return <div className="panel py-3 text-sm text-muted-foreground">{t('ticker.waiting')}</div>;
   }
   const row = items.map((p) => {
     const up = p.prev === undefined ? null : p.price >= p.prev;
@@ -18,16 +17,18 @@ export function PriceTicker() {
         key={`${p.market}:${p.symbol}`}
         className="mx-5 inline-flex items-center gap-2 whitespace-nowrap"
       >
-        <span className="text-[10px] uppercase text-slate-500">{MARKET_LABEL[p.market]}</span>
-        <span className="font-semibold text-slate-200">{p.symbol}</span>
-        <span className={`num ${up === null ? 'text-slate-300' : up ? 'text-win' : 'text-loss'}`}>
+        <span className="text-xs text-muted-foreground">{MARKET_LABEL[p.market]}</span>
+        <span className="font-semibold">{p.symbol}</span>
+        <span
+          className={cn('num', up === null ? 'text-foreground' : up ? 'text-win' : 'text-loss')}
+        >
           {price(p.price)} {up === null ? '' : up ? '▲' : '▼'}
         </span>
       </span>
     );
   });
   return (
-    <div className="panel overflow-hidden py-2" aria-label="Live prices">
+    <div className="panel overflow-hidden py-3" aria-label={t('ticker.label')}>
       <div className="flex w-max animate-marquee hover:[animation-play-state:paused]">
         {row}
         <span aria-hidden>{row}</span>

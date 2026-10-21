@@ -42,7 +42,8 @@ export function timeAgo(ms: number, now = Date.now()): string {
   return `${Math.floor(s / 86_400)}d ago`;
 }
 
-export const tone = (v: number) => (v > 0 ? 'text-win' : v < 0 ? 'text-loss' : 'text-slate-300');
+export const tone = (v: number) =>
+  v > 0 ? 'text-win' : v < 0 ? 'text-loss' : 'text-muted-foreground';
 
 export const MARKET_LABEL: Record<string, string> = {
   crypto: 'Crypto',

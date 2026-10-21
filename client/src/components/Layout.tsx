@@ -1,93 +1,310 @@
-import { NavLink, Outlet } from 'react-router-dom';
-import { useAuth } from '../hooks/auth';
-import { useLive } from '../hooks/live';
-import { LiveDot } from './ui';
+import {
+  ChartColumn,
+  BookOpen,
+  ChartCandlestick,
+  Download,
+  WifiOff,
+  Flame,
+  FlaskConical,
+  Earth,
+  GraduationCap,
+  Receipt,
+  House,
+  LogOut,
+  type LucideIcon,
+  Menu,
+  Moon,
+  Settings as SettingsIcon,
+  Sun,
+  Swords,
+  Trophy,
+} from 'lucide-react';
+import { useState } from 'react';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/ui/sheet';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { useAuth } from '@/hooks/auth';
+import { useInstallPrompt, useOnline } from '@/hooks/pwa';
+import { useApi } from '@/hooks/useApi';
+import { useLive } from '@/hooks/live';
+import { useTheme } from '@/hooks/theme';
+import { type Lang, type TKey, useLang } from '@/i18n';
+import type { Profile } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import { LevelRing } from './LevelRing';
+import { LiveDot } from './common';
 import { Toasts } from './Toasts';
 
-const NAV = [
-  { to: '/', label: 'Command', icon: '◎' },
-  { to: '/feed', label: 'Battle Feed', icon: '⚔' },
-  { to: '/arena', label: 'Arena', icon: '♜' },
-  { to: '/markets', label: 'Markets', icon: '◈' },
-  { to: '/lab', label: 'Backtest Lab', icon: '⚗' },
-  { to: '/achievements', label: 'Quests', icon: '★' },
-  { to: '/settings', label: 'Settings', icon: '⚙' },
+interface NavItem {
+  to: string;
+  label: TKey;
+  icon: LucideIcon;
+  /** Shown in the mobile bottom bar; the rest live in the "More" sheet. */
+  primary?: boolean;
+}
+
+const NAV: { group: TKey; items: NavItem[] }[] = [
+  {
+    group: 'nav.group.trade',
+    items: [
+      { to: '/', label: 'nav.home', icon: House, primary: true },
+      { to: '/charts', label: 'nav.charts', icon: ChartCandlestick, primary: true },
+      { to: '/vs', label: 'nav.vs', icon: Swords, primary: true },
+      { to: '/feed', label: 'nav.feed', icon: Receipt },
+      { to: '/markets', label: 'nav.markets', icon: Earth },
+    ],
+  },
+  {
+    group: 'nav.group.learn',
+    items: [
+      { to: '/learn/terms', label: 'nav.terms', icon: BookOpen, primary: true },
+      { to: '/learn/strategies', label: 'nav.strategies', icon: GraduationCap },
+      { to: '/lab', label: 'nav.lab', icon: FlaskConical },
+      { to: '/arena', label: 'nav.arena', icon: ChartColumn },
+    ],
+  },
+  {
+    group: 'nav.group.you',
+    items: [
+      { to: '/achievements', label: 'nav.rewards', icon: Trophy },
+      { to: '/settings', label: 'nav.settings', icon: SettingsIcon },
+    ],
+  },
 ];
+
+const ALL = NAV.flatMap((g) => g.items);
+
+function Brand() {
+  const { t } = useLang();
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-glow">
+        <ChartCandlestick className="h-5 w-5" />
+      </div>
+      <div className="leading-tight">
+        <div className="font-display text-base font-extrabold tracking-tight">
+          {t('brand.name')}
+        </div>
+        <div className="hidden text-[11px] text-muted-foreground sm:block">
+          {t('brand.tagline')}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Preferences({ className }: { className?: string }) {
+  const { theme, toggle } = useTheme();
+  const { lang, setLang, t } = useLang();
+  return (
+    <div className={cn('flex items-center gap-2', className)}>
+      <ToggleGroup
+        type="single"
+        value={lang}
+        onValueChange={(v) => v && setLang(v as Lang)}
+        aria-label={t('pref.language')}
+        className="flex-nowrap p-0.5"
+      >
+        <ToggleGroupItem value="en" className="h-7 px-2.5">
+          EN
+        </ToggleGroupItem>
+        <ToggleGroupItem value="hinglish" className="h-7 px-2.5" aria-label="Hinglish">
+          <span className="sm:hidden">HI</span>
+          <span className="hidden sm:inline">Hinglish</span>
+        </ToggleGroupItem>
+      </ToggleGroup>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={toggle}
+        aria-label={theme === 'dark' ? t('pref.light') : t('pref.dark')}
+        title={theme === 'dark' ? t('pref.light') : t('pref.dark')}
+      >
+        {theme === 'dark' ? <Sun /> : <Moon />}
+      </Button>
+    </div>
+  );
+}
+
+function SideLink({ item }: { item: NavItem }) {
+  const { t } = useLang();
+  const Icon = item.icon;
+  return (
+    <NavLink
+      to={item.to}
+      end={item.to === '/'}
+      className={({ isActive }) =>
+        cn(
+          'flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-all',
+          isActive
+            ? 'bg-card font-semibold text-primary shadow-neu-sm'
+            : 'text-muted-foreground hover:text-foreground',
+        )
+      }
+    >
+      <Icon className="h-4 w-4 shrink-0" />
+      {t(item.label)}
+    </NavLink>
+  );
+}
 
 export function Layout() {
   const { logout } = useAuth();
   const { status, connected } = useLive();
+  const { t } = useLang();
+  const profile = useApi<Profile>('/game/profile', { pollMs: 60_000 });
+  const { canInstall, install } = useInstallPrompt();
+  const online = useOnline();
+  const streak = Number(profile.data?.counters?.riskCleanStreak ?? 0);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const { pathname } = useLocation();
+  const running = !!status?.running;
+  const current = ALL.find((n) => (n.to === '/' ? pathname === '/' : pathname.startsWith(n.to)));
+
   return (
-    <div className="mx-auto flex min-h-screen max-w-[1400px]">
-      <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-edge px-3 py-5 md:flex">
-        <div className="mb-6 px-2">
-          <div className="font-display text-lg font-black tracking-wider text-neon-cyan">
-            PAPER//CMD
+    <TooltipProvider delayDuration={200}>
+      <div className="mx-auto flex min-h-screen max-w-[1440px]">
+        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col px-4 py-5 md:flex">
+          <div className="mb-5 px-2">
+            <Brand />
           </div>
-          <div className="text-[10px] uppercase tracking-[0.25em] text-slate-500">
-            fake money · real prices
+          <Link
+            to="/achievements"
+            className="neu mb-5 flex items-center gap-3 p-3 transition hover:-translate-y-0.5"
+          >
+            <LevelRing
+              level={profile.data?.level}
+              progressPct={profile.data?.progressPct ?? 0}
+              size={44}
+            />
+            <div className="min-w-0 leading-tight">
+              <div className="text-sm font-bold">
+                {t('game.level', { n: profile.data?.level ?? 1 })}
+              </div>
+              <div className="num text-xs text-muted-foreground">
+                {profile.data ? `${profile.data.xp} / ${profile.data.nextLevelXp} XP` : '…'}
+              </div>
+              <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-warn">
+                <Flame className="h-3.5 w-3.5" /> {t('game.streak', { n: streak })}
+              </div>
+            </div>
+          </Link>
+          <nav className="-mx-2 flex flex-1 flex-col gap-5 overflow-y-auto overflow-x-hidden px-2 py-1 [scrollbar-gutter:stable]">
+            {NAV.map((g) => (
+              <div key={g.group} className="flex flex-col gap-0.5">
+                <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80">
+                  {t(g.group)}
+                </div>
+                {g.items.map((n) => (
+                  <SideLink key={n.to} item={n} />
+                ))}
+              </div>
+            ))}
+          </nav>
+          {canInstall && (
+            <Button className="mt-4 w-full" onClick={() => void install()}>
+              <Download /> {t('pwa.install')}
+            </Button>
+          )}
+          <div className="neu-inset mt-4 space-y-3 p-3">
+            <LiveDot on={running} label={running ? t('bot.running') : t('bot.stopped')} />
+            <div className="text-xs text-muted-foreground">
+              {connected ? t('socket.connected') : t('socket.reconnecting')}
+            </div>
+            <Button variant="ghost" size="sm" className="w-full justify-start" onClick={logout}>
+              <LogOut /> {t('auth.logout')}
+            </Button>
           </div>
+        </aside>
+
+        <div className="min-w-0 flex-1">
+          <header className="sticky top-0 z-30 flex items-center justify-between gap-3 bg-background/80 px-4 py-3 backdrop-blur-md md:px-8">
+            <div className="md:hidden">
+              <Brand />
+            </div>
+            <div className="hidden items-center gap-2 text-sm text-muted-foreground md:flex">
+              {current && <current.icon className="h-4 w-4" />}
+              {current && t(current.label)}
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="hidden sm:inline-flex">
+                <LiveDot on={running} label={running ? t('bot.running') : t('bot.stopped')} />
+              </span>
+              <Preferences />
+            </div>
+          </header>
+          <main className="px-4 pb-28 pt-6 md:px-8 md:pb-12 md:pt-8">
+            {!online && (
+              <div className="mb-6 flex items-center gap-2 rounded-full bg-warn/15 px-4 py-2 text-sm font-semibold text-warn">
+                <WifiOff className="h-4 w-4" /> {t('pwa.offline')}
+              </div>
+            )}
+            <Outlet />
+          </main>
         </div>
-        <nav className="flex flex-col gap-1">
-          {NAV.map((n) => (
+
+        <nav
+          className="fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 flex justify-around rounded-[1.75rem] bg-card/95 shadow-lift px-1 py-2 backdrop-blur md:hidden"
+          aria-label={t('nav.main')}
+        >
+          {ALL.filter((n) => n.primary).map((n) => (
             <NavLink
               key={n.to}
               to={n.to}
               end={n.to === '/'}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition ${isActive ? 'bg-neon-cyan/10 text-neon-cyan shadow-glow' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'}`
+                cn(
+                  'flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg py-1 text-[11px] font-medium',
+                  isActive ? 'text-primary' : 'text-muted-foreground',
+                )
               }
             >
-              <span className="w-5 text-center">{n.icon}</span>
-              {n.label}
+              <n.icon className="h-5 w-5" />
+              <span className="truncate">{t(n.label)}</span>
             </NavLink>
           ))}
-        </nav>
-        <div className="mt-auto space-y-3 px-2">
-          <LiveDot on={!!status?.running} label={status?.running ? 'BOT LIVE' : 'BOT STOPPED'} />
-          <div className="text-[11px] text-slate-500">
-            {connected ? 'Socket connected' : 'Socket reconnecting…'}
-          </div>
-          <button className="btn-ghost w-full py-1 text-xs" onClick={logout}>
-            Log out
-          </button>
-        </div>
-      </aside>
-
-      <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b border-edge bg-void/80 px-4 py-3 backdrop-blur md:hidden">
-          <span className="font-display font-black tracking-wider text-neon-cyan">PAPER//CMD</span>
-          <div className="flex items-center gap-3">
-            <LiveDot on={!!status?.running} label={status?.running ? 'LIVE' : 'OFF'} />
-            <button className="text-xs text-slate-400" onClick={logout}>
-              Log out
-            </button>
-          </div>
-        </header>
-        <main className="px-4 pb-24 pt-4 md:px-8 md:pb-10 md:pt-8">
-          <Outlet />
-        </main>
-      </div>
-
-      <nav
-        className="fixed inset-x-0 bottom-0 z-40 flex justify-around border-t border-edge bg-void/95 px-1 py-2 backdrop-blur md:hidden"
-        aria-label="Main"
-      >
-        {NAV.map((n) => (
-          <NavLink
-            key={n.to}
-            to={n.to}
-            end={n.to === '/'}
-            className={({ isActive }) =>
-              `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-lg py-1 text-[10px] ${isActive ? 'text-neon-cyan' : 'text-slate-500'}`
-            }
+          <button
+            type="button"
+            onClick={() => setMoreOpen(true)}
+            className="flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg py-1 text-[11px] font-medium text-muted-foreground"
           >
-            <span className="text-base leading-none">{n.icon}</span>
-            <span className="truncate">{n.label.split(' ')[0]}</span>
-          </NavLink>
-        ))}
-      </nav>
-      <Toasts />
-    </div>
+            <Menu className="h-5 w-5" />
+            {t('nav.more')}
+          </button>
+        </nav>
+
+        <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+          <SheetContent>
+            <SheetTitle>{t('nav.more')}</SheetTitle>
+            <SheetDescription className="mb-4">{t('nav.moreHint')}</SheetDescription>
+            <div className="space-y-4" onClick={() => setMoreOpen(false)}>
+              {NAV.map((g) => (
+                <div key={g.group} className="space-y-1">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {t(g.group)}
+                  </div>
+                  <div className="grid grid-cols-2 gap-1">
+                    {g.items.map((n) => (
+                      <SideLink key={n.to} item={n} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+              {canInstall && (
+                <Button className="w-full" onClick={() => void install()}>
+                  <Download /> {t('pwa.install')}
+                </Button>
+              )}
+              <Button variant="outline" className="w-full" onClick={logout}>
+                <LogOut /> {t('auth.logout')}
+              </Button>
+            </div>
+          </SheetContent>
+        </Sheet>
+        <Toasts />
+      </div>
+    </TooltipProvider>
   );
 }

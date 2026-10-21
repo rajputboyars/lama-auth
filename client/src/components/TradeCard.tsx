@@ -1,60 +1,87 @@
 import { motion } from 'framer-motion';
-import { MARKET_LABEL, money, price, qty, timeAgo } from '../lib/format';
-import type { Trade } from '../lib/types';
-import { Badge } from './ui';
+import { ArrowDownRight, ArrowUpRight, NotebookPen, Repeat, CircleX } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { strategyName } from '@/content/strategies';
+import { useLang } from '@/i18n';
+import { MARKET_LABEL, money, price, qty, timeAgo } from '@/lib/format';
+import type { Trade } from '@/lib/types';
+import { cn } from '@/lib/utils';
+import { Badge } from './common';
+import { Term } from './Term';
 
 export function TradeCard({ trade, onReview }: { trade: Trade; onReview?: (t: Trade) => void }) {
+  const { t, pick } = useLang();
   const failed = trade.status === 'failed';
   const closing = trade.side !== 'buy';
   const win = closing && trade.pnl > 0;
   const loss = closing && trade.pnl <= 0;
-  const border = failed
-    ? 'border-slate-600'
-    : win
-      ? 'border-win/50 shadow-glow-win'
-      : loss
-        ? 'border-loss/50 shadow-glow-loss'
-        : 'border-neon-cyan/40';
+  const Icon = failed
+    ? CircleX
+    : trade.side === 'buy'
+      ? ArrowUpRight
+      : trade.side === 'arb'
+        ? Repeat
+        : ArrowDownRight;
 
   return (
     <motion.article
       layout
-      initial={{ opacity: 0, x: -24, scale: 0.97 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-      className={`rounded-2xl border bg-panel/90 p-4 ${border}`}
+      transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+      className={cn(
+        'rounded-3xl bg-card p-4 shadow-soft',
+        !failed && win && 'ring-1 ring-win/25',
+        !failed && loss && 'ring-1 ring-loss/25',
+      )}
     >
       <div className="flex flex-wrap items-center gap-2">
-        <Badge
-          tone={
+        <span
+          className={cn(
+            'grid h-8 w-8 place-items-center rounded-lg',
             failed
-              ? 'slate'
-              : trade.side === 'buy'
-                ? 'cyan'
-                : trade.side === 'arb'
-                  ? 'pink'
-                  : win
-                    ? 'win'
-                    : 'loss'
-          }
+              ? 'bg-muted text-muted-foreground'
+              : win
+                ? 'bg-win/10 text-win'
+                : loss
+                  ? 'bg-loss/10 text-loss'
+                  : 'bg-primary/10 text-primary',
+          )}
         >
-          {failed ? 'FAILED' : trade.side.toUpperCase()}
-        </Badge>
-        <span className="font-semibold">{trade.symbol}</span>
-        <span className="text-xs text-slate-500">
-          {MARKET_LABEL[trade.market]} · {trade.strategy}
+          <Icon className="h-4 w-4" />
         </span>
-        <span className="ml-auto text-xs text-slate-500">{timeAgo(trade.time)}</span>
+        <div className="min-w-0">
+          <div className="font-semibold">
+            {failed
+              ? t('trade.failed')
+              : trade.side === 'buy'
+                ? t('trade.bought')
+                : trade.side === 'arb'
+                  ? t('trade.arb')
+                  : t('trade.sold')}{' '}
+            {trade.symbol}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {MARKET_LABEL[trade.market]} · {strategyName(trade.strategy, pick)}
+          </div>
+        </div>
+        <span className="ml-auto text-xs text-muted-foreground">{timeAgo(trade.time)}</span>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-4">
-        <Field k="Qty" v={qty(trade.quantity)} />
-        <Field k="Fill" v={failed ? '—' : price(trade.fillPrice)} />
-        <Field k="Costs" v={money(trade.fees + trade.taxes, trade.currency)} />
+      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm sm:grid-cols-4">
+        <Field k={t('trade.amount')} v={qty(trade.quantity)} />
+        <Field
+          k={<Term id="fill">{t('trade.price')}</Term>}
+          v={failed ? '—' : price(trade.fillPrice)}
+        />
+        <Field
+          k={<Term id="fees">{t('trade.costs')}</Term>}
+          v={money(trade.fees + trade.taxes, trade.currency)}
+        />
         {closing && !failed ? (
           <Field
-            k="P/L (net)"
+            k={<Term id="pnl">{t('trade.result')}</Term>}
             v={
               <span className={win ? 'text-win' : 'text-loss'}>
                 {money(trade.pnl, trade.currency, { sign: true })}
@@ -62,34 +89,37 @@ export function TradeCard({ trade, onReview }: { trade: Trade; onReview?: (t: Tr
             }
           />
         ) : (
-          <Field k="Ref price" v={price(trade.refPrice)} />
+          <Field k={t('trade.screenPrice')} v={price(trade.refPrice)} />
         )}
       </div>
-      <p className="mt-2 text-xs text-slate-400">{trade.reason}</p>
+      <p className="mt-3 neu-inset px-3 py-2 text-xs text-muted-foreground">
+        <span className="font-semibold text-foreground">{t('trade.why')}</span> {trade.reason}
+      </p>
 
       {trade.review ? (
-        <p className="mt-2 rounded-lg border border-edge bg-void/50 p-2 text-xs text-slate-300">
-          📝 {trade.review.note}
+        <p className="mt-2 flex gap-2 rounded-lg border p-2 text-xs">
+          <NotebookPen className="h-4 w-4 shrink-0 text-primary" /> {trade.review.note}
         </p>
       ) : (
         loss &&
         !failed &&
         onReview &&
         trade.id && (
-          <button className="btn-ghost mt-3 px-3 py-1 text-xs" onClick={() => onReview(trade)}>
-            Review this loss (+XP)
-          </button>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => onReview(trade)}>
+            <NotebookPen /> {t('trade.review')}
+          </Button>
         )
       )}
+      {failed && <Badge tone="slate">{t('trade.failedHint')}</Badge>}
     </motion.article>
   );
 }
 
-function Field({ k, v }: { k: string; v: React.ReactNode }) {
+function Field({ k, v }: { k: React.ReactNode; v: React.ReactNode }) {
   return (
     <div>
-      <div className="text-[10px] uppercase tracking-wider text-slate-500">{k}</div>
-      <div className="num">{v}</div>
+      <div className="text-xs text-muted-foreground">{k}</div>
+      <div className="num font-medium">{v}</div>
     </div>
   );
 }

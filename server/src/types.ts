@@ -48,4 +48,6 @@ export interface CostBreakdown {
 export interface Signal {
   action: Action;
   reason: string;
+  /** Extra facts about the decision, e.g. Auto-Pilot's market mood and chosen strategy. */
+  meta?: Record<string, string>;
 }
