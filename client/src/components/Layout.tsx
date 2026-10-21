@@ -10,6 +10,7 @@ import {
   GraduationCap,
   Receipt,
   House,
+  LifeBuoy,
   LogOut,
   type LucideIcon,
   Menu,
@@ -26,14 +27,17 @@ import { Sheet, SheetContent, SheetDescription, SheetTitle } from '@/components/
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { useAuth } from '@/hooks/auth';
+import { type Mode, useMode } from '@/hooks/mode';
 import { useInstallPrompt, useOnline } from '@/hooks/pwa';
 import { useApi } from '@/hooks/useApi';
+import { useWizard } from '@/hooks/wizard';
 import { useLive } from '@/hooks/live';
 import { useTheme } from '@/hooks/theme';
 import { type Lang, type TKey, useLang } from '@/i18n';
 import type { Profile } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { LevelRing } from './LevelRing';
+import { SetupWizard } from './SetupWizard';
 import { LiveDot } from './common';
 import { Toasts } from './Toasts';
 
@@ -43,6 +47,8 @@ interface NavItem {
   icon: LucideIcon;
   /** Shown in the mobile bottom bar; the rest live in the "More" sheet. */
   primary?: boolean;
+  /** Advanced page: hidden from the menu in Simple mode (still opens by link). */
+  expert?: boolean;
 }
 
 const NAV: { group: TKey; items: NavItem[] }[] = [
@@ -53,7 +59,7 @@ const NAV: { group: TKey; items: NavItem[] }[] = [
       { to: '/charts', label: 'nav.charts', icon: ChartCandlestick, primary: true },
       { to: '/vs', label: 'nav.vs', icon: Swords, primary: true },
       { to: '/feed', label: 'nav.feed', icon: Receipt },
-      { to: '/markets', label: 'nav.markets', icon: Earth },
+      { to: '/markets', label: 'nav.markets', icon: Earth, expert: true },
     ],
   },
   {
@@ -61,8 +67,8 @@ const NAV: { group: TKey; items: NavItem[] }[] = [
     items: [
       { to: '/learn/terms', label: 'nav.terms', icon: BookOpen, primary: true },
       { to: '/learn/strategies', label: 'nav.strategies', icon: GraduationCap },
-      { to: '/lab', label: 'nav.lab', icon: FlaskConical },
-      { to: '/arena', label: 'nav.arena', icon: ChartColumn },
+      { to: '/lab', label: 'nav.lab', icon: FlaskConical, expert: true },
+      { to: '/arena', label: 'nav.arena', icon: ChartColumn, expert: true },
     ],
   },
   {
@@ -92,6 +98,28 @@ function Brand() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ModeSwitch({ className }: { className?: string }) {
+  const { mode, setMode } = useMode();
+  const { t } = useLang();
+  return (
+    <ToggleGroup
+      type="single"
+      value={mode}
+      onValueChange={(v) => v && setMode(v as Mode)}
+      aria-label={t('mode.label')}
+      className={cn('flex-nowrap p-0.5', className)}
+      title={t('mode.hint')}
+    >
+      <ToggleGroupItem value="simple" className="h-7 px-2.5">
+        {t('mode.simple')}
+      </ToggleGroupItem>
+      <ToggleGroupItem value="expert" className="h-7 px-2.5">
+        {t('mode.expert')}
+      </ToggleGroupItem>
+    </ToggleGroup>
   );
 }
 
@@ -158,6 +186,9 @@ export function Layout() {
   const { canInstall, install } = useInstallPrompt();
   const online = useOnline();
   const streak = Number(profile.data?.counters?.riskCleanStreak ?? 0);
+  const { simple } = useMode();
+  const { openWizard } = useWizard();
+  const nav = NAV.map((g) => ({ ...g, items: g.items.filter((i) => !simple || !i.expert) }));
   const [moreOpen, setMoreOpen] = useState(false);
   const { pathname } = useLocation();
   const running = !!status?.running;
@@ -192,7 +223,7 @@ export function Layout() {
             </div>
           </Link>
           <nav className="-mx-2 flex flex-1 flex-col gap-5 overflow-y-auto overflow-x-hidden px-2 py-1 [scrollbar-gutter:stable]">
-            {NAV.map((g) => (
+            {nav.map((g) => (
               <div key={g.group} className="flex flex-col gap-0.5">
                 <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80">
                   {t(g.group)}
@@ -209,10 +240,14 @@ export function Layout() {
             </Button>
           )}
           <div className="neu-inset mt-4 space-y-3 p-3">
+            <ModeSwitch className="w-full justify-between [&>*]:flex-1" />
             <LiveDot on={running} label={running ? t('bot.running') : t('bot.stopped')} />
             <div className="text-xs text-muted-foreground">
               {connected ? t('socket.connected') : t('socket.reconnecting')}
             </div>
+            <Button variant="ghost" size="sm" className="w-full justify-start" onClick={openWizard}>
+              <LifeBuoy /> {t('nav.help')}
+            </Button>
             <Button variant="ghost" size="sm" className="w-full justify-start" onClick={logout}>
               <LogOut /> {t('auth.logout')}
             </Button>
@@ -279,8 +314,12 @@ export function Layout() {
           <SheetContent>
             <SheetTitle>{t('nav.more')}</SheetTitle>
             <SheetDescription className="mb-4">{t('nav.moreHint')}</SheetDescription>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm font-semibold">{t('mode.label')}</span>
+              <ModeSwitch />
+            </div>
             <div className="space-y-4" onClick={() => setMoreOpen(false)}>
-              {NAV.map((g) => (
+              {nav.map((g) => (
                 <div key={g.group} className="space-y-1">
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     {t(g.group)}
@@ -297,6 +336,9 @@ export function Layout() {
                   <Download /> {t('pwa.install')}
                 </Button>
               )}
+              <Button variant="outline" className="w-full" onClick={openWizard}>
+                <LifeBuoy /> {t('nav.help')}
+              </Button>
               <Button variant="outline" className="w-full" onClick={logout}>
                 <LogOut /> {t('auth.logout')}
               </Button>
@@ -304,6 +346,7 @@ export function Layout() {
           </SheetContent>
         </Sheet>
         <Toasts />
+        <SetupWizard />
       </div>
     </TooltipProvider>
   );

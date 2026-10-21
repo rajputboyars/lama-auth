@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
-import { CircleCheck, OctagonX, RotateCcw, Save } from 'lucide-react';
+import { CircleCheck, OctagonX, RotateCcw, Save, WandSparkles } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { RiskPresetPicker } from '@/components/RiskPresetPicker';
 import { Term } from '@/components/Term';
 import { ErrorNote, Note, PageHeader, Panel, Toggle } from '@/components/common';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { GUIDE_BY_ID, strategyName } from '@/content/strategies';
+import { useMode } from '@/hooks/mode';
 import { useApi } from '@/hooks/useApi';
+import { useWizard } from '@/hooks/wizard';
 import { useLive } from '@/hooks/live';
 import { type TKey, useLang } from '@/i18n';
 import { api } from '@/lib/api';
@@ -77,6 +80,8 @@ const RISK_FIELDS: {
 
 export function Settings() {
   const { t, pick } = useLang();
+  const { simple } = useMode();
+  const { openWizard } = useWizard();
   const remote = useApi<SettingsT>('/settings');
   const strategies = useApi<StrategyInfo[]>('/strategies');
   const { status, setStatus } = useLive();
@@ -131,7 +136,15 @@ export function Settings() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t('set.title')} intro={t('set.intro')} />
+      <PageHeader
+        title={t('set.title')}
+        intro={t('set.intro')}
+        action={
+          <Button variant="outline" onClick={openWizard}>
+            <WandSparkles /> {t('set.runSetup')}
+          </Button>
+        }
+      />
 
       <motion.div
         animate={killOn ? { scale: [1, 1.01, 1] } : {}}
@@ -174,202 +187,249 @@ export function Settings() {
       <Panel
         title={<Term id="risk">{t('set.risk.title')}</Term>}
         hint={t('set.risk.hint')}
-        action={<SaveBtn onClick={() => save({ risk: draft.risk })} />}
+        action={!simple && <SaveBtn onClick={() => save({ risk: draft.risk })} />}
       >
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {RISK_FIELDS.map((f) => (
-            <label key={f.key} className="block space-y-1.5">
-              <span className="text-sm font-medium">
-                <Term id={f.term}>{t(f.label)}</Term>
-              </span>
-              <Input
-                className="num"
-                type="number"
-                step={f.step}
-                value={draft.risk[f.key]}
-                onChange={(e) =>
-                  setDraft({ ...draft, risk: { ...draft.risk, [f.key]: num(e.target.value) } })
+        <RiskPresetPicker
+          risk={draft.risk}
+          onPick={(risk) => {
+            setDraft({ ...draft, risk });
+            void save({ risk }, t('set.presetSaved'));
+          }}
+        />
+        {!simple && (
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {RISK_FIELDS.map((f) => (
+              <label key={f.key} className="block space-y-1.5">
+                <span className="text-sm font-medium">
+                  <Term id={f.term}>{t(f.label)}</Term>
+                </span>
+                <Input
+                  className="num"
+                  type="number"
+                  step={f.step}
+                  value={draft.risk[f.key]}
+                  onChange={(e) =>
+                    setDraft({ ...draft, risk: { ...draft.risk, [f.key]: num(e.target.value) } })
+                  }
+                />
+                <span className="block text-xs text-muted-foreground">{t(f.hint)}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </Panel>
+
+      {simple && (
+        <Panel
+          title={<Term id="market">{t('set.markets.title')}</Term>}
+          hint={t('set.markets.hint')}
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(Object.keys(draft.markets) as MarketId[]).map((m) => (
+              <label
+                key={m}
+                className="flex items-center justify-between gap-3 rounded-3xl bg-card p-4 shadow-soft"
+              >
+                <span>
+                  <span className="block font-semibold">{MARKET_LABEL[m]}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {t(`markets.about.${m}` as TKey)}
+                  </span>
+                </span>
+                <Toggle
+                  checked={draft.markets[m].enabled}
+                  onChange={(enabled) => {
+                    const markets = { ...draft.markets, [m]: { enabled } };
+                    setDraft({ ...draft, markets });
+                    void save({ markets });
+                  }}
+                  label={MARKET_LABEL[m]}
+                />
+              </label>
+            ))}
+          </div>
+        </Panel>
+      )}
+
+      {!simple && (
+        <>
+          <Panel
+            title={<Term id="strategy">{t('set.strat.title')}</Term>}
+            hint={t('set.strat.hint')}
+            action={
+              <SaveBtn
+                onClick={() =>
+                  save({ strategies: draft.strategies, candleInterval: draft.candleInterval })
                 }
               />
-              <span className="block text-xs text-muted-foreground">{t(f.hint)}</span>
-            </label>
-          ))}
-        </div>
-      </Panel>
-
-      <Panel
-        title={<Term id="strategy">{t('set.strat.title')}</Term>}
-        hint={t('set.strat.hint')}
-        action={
-          <SaveBtn
-            onClick={() =>
-              save({ strategies: draft.strategies, candleInterval: draft.candleInterval })
-            }
-          />
-        }
-      >
-        <div className="mb-4 flex flex-wrap items-center gap-3 text-sm">
-          <span className="font-medium">
-            <Term id="timeframe">{t('set.strat.interval')}</Term>
-          </span>
-          <Select
-            value={draft.candleInterval}
-            onValueChange={(v) =>
-              setDraft({ ...draft, candleInterval: v as SettingsT['candleInterval'] })
             }
           >
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {(['1m', '5m', '15m', '1h'] as const).map((i) => (
-                <SelectItem key={i} value={i}>
-                  {t(`tf.${i}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid gap-3 lg:grid-cols-2">
-          {(strategies.data ?? []).map((s) => {
-            const cur = draft.strategies[s.id];
-            if (!cur) return null;
-            const guide = GUIDE_BY_ID.get(s.id);
-            const set = (patch: Partial<typeof cur>) =>
-              setDraft({
-                ...draft,
-                strategies: { ...draft.strategies, [s.id]: { ...cur, ...patch } },
-              });
-            return (
-              <div key={s.id} className="rounded-3xl bg-card shadow-soft p-4">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <div className="font-semibold">
-                      {guide?.icon} {strategyName(s.id, pick)}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {s.markets === 'all'
-                        ? t('common.allMarkets')
-                        : s.markets.map((m) => MARKET_LABEL[m]).join(', ')}
-                    </div>
-                  </div>
-                  <Toggle
-                    checked={cur.enabled}
-                    onChange={(v) => set({ enabled: v })}
-                    label={t('set.strat.enable', { name: strategyName(s.id, pick) })}
-                  />
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {guide
-                    ? pick(guide.oneLiner)
-                    : s.id === 'user'
-                      ? t('set.strat.userHint')
-                      : s.description}
-                </p>
-                {s.params.length > 0 && (
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    {s.params.map((p) => (
-                      <label key={p.key} className="block space-y-1">
-                        <span className="text-xs text-muted-foreground">
-                          {guide?.paramLabels?.[p.key] ? pick(guide.paramLabels[p.key]) : p.label}
-                        </span>
-                        <Input
-                          className="num h-9"
-                          type="number"
-                          min={p.min}
-                          max={p.max}
-                          step={p.step}
-                          value={cur.params[p.key] ?? p.default}
-                          onChange={(e) =>
-                            set({ params: { ...cur.params, [p.key]: num(e.target.value) } })
-                          }
-                        />
-                      </label>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </Panel>
-
-      <Panel
-        title={t('set.cost.title')}
-        hint={t('set.cost.hint')}
-        action={<SaveBtn onClick={() => save({ costs: draft.costs })} />}
-      >
-        <div className="space-y-4">
-          {(Object.keys(draft.costs) as MarketId[]).map((m) => {
-            const c = draft.costs[m];
-            const set = (patch: Partial<CostConfig>) =>
-              setDraft({ ...draft, costs: { ...draft.costs, [m]: { ...c, ...patch } } });
-            return (
-              <div key={m} className="rounded-3xl bg-card shadow-soft p-4">
-                <div className="mb-3 font-semibold">{MARKET_LABEL[m]}</div>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-                  {COST_FIELDS.map((f) => (
-                    <label key={f.key} className="block space-y-1">
-                      <span className="text-xs text-muted-foreground">
-                        <Term id={f.term}>{t(f.label)}</Term>
-                      </span>
-                      <Input
-                        className="num h-9"
-                        type="number"
-                        step={f.step}
-                        min={0}
-                        value={c[f.key] as number}
-                        onChange={(e) => set({ [f.key]: num(e.target.value) })}
-                      />
-                    </label>
+            <div className="mb-4 flex flex-wrap items-center gap-3 text-sm">
+              <span className="font-medium">
+                <Term id="timeframe">{t('set.strat.interval')}</Term>
+              </span>
+              <Select
+                value={draft.candleInterval}
+                onValueChange={(v) =>
+                  setDraft({ ...draft, candleInterval: v as SettingsT['candleInterval'] })
+                }
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(['1m', '5m', '15m', '1h'] as const).map((i) => (
+                    <SelectItem key={i} value={i}>
+                      {t(`tf.${i}`)}
+                    </SelectItem>
                   ))}
-                </div>
-                {c.taxes.length > 0 && (
-                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    {c.taxes.map((x, i) => (
-                      <label key={x.name} className="block space-y-1">
-                        <span className="text-xs text-muted-foreground">
-                          <Term id="taxes">{x.name}</Term> (
-                          {x.side === 'both'
-                            ? t('set.tax.both')
-                            : x.side === 'buy'
-                              ? t('common.buy')
-                              : t('common.sell')}
-                          ,{' '}
-                          {x.base === 'fees'
-                            ? t('set.tax.ofFees')
-                            : x.fixed
-                              ? t('set.tax.fixed')
-                              : '%'}
-                          )
-                        </span>
-                        <Input
-                          className="num h-9"
-                          type="number"
-                          step={0.001}
-                          min={0}
-                          value={x.fixed ?? x.pct}
-                          onChange={(e) =>
-                            set({
-                              taxes: c.taxes.map((y, j) =>
-                                j !== i
-                                  ? y
-                                  : y.fixed !== undefined
-                                    ? { ...y, fixed: num(e.target.value) }
-                                    : { ...y, pct: num(e.target.value) },
-                              ),
-                            })
-                          }
-                        />
-                      </label>
-                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-3 lg:grid-cols-2">
+              {(strategies.data ?? []).map((s) => {
+                const cur = draft.strategies[s.id];
+                if (!cur) return null;
+                const guide = GUIDE_BY_ID.get(s.id);
+                const set = (patch: Partial<typeof cur>) =>
+                  setDraft({
+                    ...draft,
+                    strategies: { ...draft.strategies, [s.id]: { ...cur, ...patch } },
+                  });
+                return (
+                  <div key={s.id} className="rounded-3xl bg-card shadow-soft p-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <div>
+                        <div className="font-semibold">
+                          {guide?.icon} {strategyName(s.id, pick)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {s.markets === 'all'
+                            ? t('common.allMarkets')
+                            : s.markets.map((m) => MARKET_LABEL[m]).join(', ')}
+                        </div>
+                      </div>
+                      <Toggle
+                        checked={cur.enabled}
+                        onChange={(v) => set({ enabled: v })}
+                        label={t('set.strat.enable', { name: strategyName(s.id, pick) })}
+                      />
+                    </div>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {guide
+                        ? pick(guide.oneLiner)
+                        : s.id === 'user'
+                          ? t('set.strat.userHint')
+                          : s.description}
+                    </p>
+                    {s.params.length > 0 && (
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        {s.params.map((p) => (
+                          <label key={p.key} className="block space-y-1">
+                            <span className="text-xs text-muted-foreground">
+                              {guide?.paramLabels?.[p.key]
+                                ? pick(guide.paramLabels[p.key])
+                                : p.label}
+                            </span>
+                            <Input
+                              className="num h-9"
+                              type="number"
+                              min={p.min}
+                              max={p.max}
+                              step={p.step}
+                              value={cur.params[p.key] ?? p.default}
+                              onChange={(e) =>
+                                set({ params: { ...cur.params, [p.key]: num(e.target.value) } })
+                              }
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </Panel>
+                );
+              })}
+            </div>
+          </Panel>
+
+          <Panel
+            title={t('set.cost.title')}
+            hint={t('set.cost.hint')}
+            action={<SaveBtn onClick={() => save({ costs: draft.costs })} />}
+          >
+            <div className="space-y-4">
+              {(Object.keys(draft.costs) as MarketId[]).map((m) => {
+                const c = draft.costs[m];
+                const set = (patch: Partial<CostConfig>) =>
+                  setDraft({ ...draft, costs: { ...draft.costs, [m]: { ...c, ...patch } } });
+                return (
+                  <div key={m} className="rounded-3xl bg-card shadow-soft p-4">
+                    <div className="mb-3 font-semibold">{MARKET_LABEL[m]}</div>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+                      {COST_FIELDS.map((f) => (
+                        <label key={f.key} className="block space-y-1">
+                          <span className="text-xs text-muted-foreground">
+                            <Term id={f.term}>{t(f.label)}</Term>
+                          </span>
+                          <Input
+                            className="num h-9"
+                            type="number"
+                            step={f.step}
+                            min={0}
+                            value={c[f.key] as number}
+                            onChange={(e) => set({ [f.key]: num(e.target.value) })}
+                          />
+                        </label>
+                      ))}
+                    </div>
+                    {c.taxes.length > 0 && (
+                      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        {c.taxes.map((x, i) => (
+                          <label key={x.name} className="block space-y-1">
+                            <span className="text-xs text-muted-foreground">
+                              <Term id="taxes">{x.name}</Term> (
+                              {x.side === 'both'
+                                ? t('set.tax.both')
+                                : x.side === 'buy'
+                                  ? t('common.buy')
+                                  : t('common.sell')}
+                              ,{' '}
+                              {x.base === 'fees'
+                                ? t('set.tax.ofFees')
+                                : x.fixed
+                                  ? t('set.tax.fixed')
+                                  : '%'}
+                              )
+                            </span>
+                            <Input
+                              className="num h-9"
+                              type="number"
+                              step={0.001}
+                              min={0}
+                              value={x.fixed ?? x.pct}
+                              onChange={(e) =>
+                                set({
+                                  taxes: c.taxes.map((y, j) =>
+                                    j !== i
+                                      ? y
+                                      : y.fixed !== undefined
+                                        ? { ...y, fixed: num(e.target.value) }
+                                        : { ...y, pct: num(e.target.value) },
+                                  ),
+                                })
+                              }
+                            />
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </Panel>
+        </>
+      )}
 
       <Panel title={<Term id="wallet">{t('set.wallets.title')}</Term>} hint={t('set.wallets.hint')}>
         <div className="flex flex-wrap items-center gap-3">

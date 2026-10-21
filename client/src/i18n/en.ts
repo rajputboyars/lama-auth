@@ -437,4 +437,114 @@ export const en = {
   'terms.learned': 'learned',
   'pwa.offline': 'You are offline. Saved pages still open, but live prices need the internet.',
   'pwa.install': 'Install the app',
+
+  // Plain-language reasons for bot decisions (lib/explain.ts)
+  'why.failed': 'The order did not go through: {why}. The bot wanted to trade because {inner}',
+  'why.auto.downSell': 'The market turned into a downtrend, so the bot sold to protect your money.',
+  'why.auto.using': 'The market is {mood}, so the bot used {strategy}: {inner}',
+  'why.auto.waiting': 'The market is {mood}, so the bot uses {strategy}, which is waiting: {inner}',
+  'why.auto.out': 'The bot is staying out for now: {inner}',
+  'why.auto.holding': 'The bot is holding what it bought while the market is {mood}.',
+  'why.pick': 'Your pick, {strategy}: {inner}',
+  'why.pick.none': 'No strategy picked for this market yet.',
+  'why.sma.up':
+    'Prices started rising (the {fast}-candle average moved above the {slow}-candle average), so the bot bought.',
+  'why.sma.down':
+    'Prices started falling (the {fast}-candle average dropped below the {slow}-candle average), so the bot sold.',
+  'why.sma.upWait':
+    'Prices are already going up, but there is no fresh start signal, so the bot waits.',
+  'why.sma.downWait': 'Prices are going down, so the bot waits for them to turn up.',
+  'why.sma.badParams':
+    'The short average must be shorter than the long one. Check this strategy in Settings.',
+  'why.rsi.buy':
+    'Price fell fast and is unusually low (RSI {rsi}, below {limit}), so the bot bought, expecting a bounce.',
+  'why.rsi.recovered': 'Price bounced back (RSI up to {rsi}), so the bot sold to keep the gain.',
+  'why.band.mid': 'Price came back to its normal level, so the bot sold.',
+  'why.rsi.wait': 'Price is not low enough yet (RSI {rsi}), so the bot waits for a dip.',
+  'why.breakout.buy':
+    'Price broke above its highest level of the last {n} candles ({price}), so the bot bought.',
+  'why.breakout.sell':
+    'Price fell below its lowest level of the last {n} candles ({price}), so the bot sold.',
+  'why.breakout.wait': 'Price is still inside its recent range, so the bot waits for a breakout.',
+  'why.arb.trade':
+    'The coin was cheaper on {buy} than on {sell}, so the bot bought on one and sold on the other (about {edge}% after costs).',
+  'why.arb.wait':
+    'The price gap between exchanges is too small after costs ({edge}%, needs {min}%), so the bot waits.',
+  'why.arb.noQuotes': 'The bot needs prices from at least 2 exchanges to compare.',
+  'why.needCandles':
+    'The bot is still collecting price history ({have} of {need} candles) before it decides.',
+  'why.needCandlesShort': 'The bot is still collecting price history before it decides.',
+  'why.mood.uptrend': 'Prices are climbing steadily.',
+  'why.mood.downtrend': 'Prices are falling steadily.',
+  'why.mood.sideways': 'Prices are moving back and forth with no clear direction.',
+  'why.mood.squeeze': 'Prices have gone unusually quiet, and a big move may come.',
+  'why.mood.unclear': 'The signals disagree, so the direction is unclear.',
+  'why.risk.kill': 'The emergency stop is on, so no trades.',
+  'why.risk.daily':
+    "Today's loss reached {loss}% (limit {limit}%), so no new trades until tomorrow.",
+  'why.risk.maxOpen': 'The bot already holds {n} trades, the most allowed at once.',
+  'why.risk.cash': 'There is no free cash left to buy with.',
+  'why.risk.small': 'The trade would be too small to make sense.',
+  'why.risk.nothing': 'There is nothing to sell.',
+  'why.risk.rejected': 'the exchange rejected it (this copies real-life failures on purpose)',
+  'reason.details': 'Show technical details',
+  'reason.hide': 'Hide technical details',
+
+  // Simple / Expert mode
+  'mode.label': 'View',
+  'mode.simple': 'Simple',
+  'mode.expert': 'Expert',
+  'mode.hint': 'Simple shows only what you need. Expert shows every page and number.',
+  'nav.help': 'Help: run setup again',
+  // Safety presets
+  'preset.custom':
+    'You changed the numbers by hand, so this is a custom setup. Pick a card to go back to a preset.',
+  'set.presetSaved': 'Safety level saved',
+  'set.runSetup': 'Run setup again',
+  'set.markets.title': 'Markets to trade',
+  'set.markets.hint': 'Turn a market off to stop the bot trading there.',
+  // First-time setup wizard
+  'wiz.step': 'Step {n} of {total}',
+  'wiz.later': 'Maybe later',
+  'wiz.begin': "Let's set up",
+  'wiz.next': 'Next',
+  'wiz.back': 'Back',
+  'wiz.finish': 'Finish without starting',
+  'wiz.start': 'Start the bot',
+  'wiz.welcome.title': 'Welcome! Let us get you started',
+  'wiz.welcome.body':
+    'This app teaches trading with practice money. It takes about a minute to set up.',
+  'wiz.welcome.p1':
+    'Everything uses fake money with real market prices. You cannot lose real money here.',
+  'wiz.welcome.p2':
+    'A bot makes practice trades for you and explains every decision in plain words.',
+  'wiz.welcome.p3': 'Pick a strategy and race the bot. Earn points for good habits, not for luck.',
+  'wiz.markets.title': 'Which markets should the bot watch?',
+  'wiz.markets.body': 'You can change this any time in Settings.',
+  'wiz.markets.best': 'best to start: open 24/7',
+  'wiz.markets.none': 'Pick at least one market.',
+  'wiz.strategy.title': 'Pick your strategy',
+  'wiz.strategy.body':
+    'This is how your side will trade. Not sure? Trend Rider is the easiest to follow.',
+  'wiz.strategy.race':
+    'The bot plays against you with Auto-Pilot, which switches strategy by market mood.',
+  'wiz.safety.title': 'How careful should the bot be?',
+  'wiz.safety.body': 'These limits protect your practice money. Careful is a good start.',
+  'wiz.ready.title': 'All set!',
+  'wiz.ready.body': 'Press Start and the bot begins watching prices. Here is where to look:',
+  'wiz.ready.tip1': 'Home shows your practice money and what the bot is doing right now.',
+  'wiz.ready.tip2': 'You vs Bot shows who is winning, live.',
+  'wiz.ready.tip3': 'Any word with a dotted line has a short explanation. Tap it.',
+  // Bot status on Home
+  'narr.title': 'What is the bot doing right now?',
+  'narr.hint': 'Live, in plain words, for each market.',
+  'narr.stopped': 'The bot is resting. Press Start and it will begin watching prices.',
+  'narr.halted': 'The emergency stop is on, so the bot is not trading anywhere.',
+  'narr.disabled': 'This market is turned off, so the bot is not watching it.',
+  'narr.closed': 'This market is closed right now, so the bot is waiting.',
+  'narr.error': 'The bot could not get prices for this market. It will keep trying.',
+  'narr.warming': 'The bot just started here and is reading the first prices.',
+  'narr.using': 'Watching {symbols}. Prices are mostly {mood}, so the bot uses {strategy}.',
+  'narr.out': 'Watching {symbols}. Prices are mostly {mood}, so the bot is staying out for now.',
+  'narr.last': 'Last action: {action} {symbol} {ago}.',
 } as const;
