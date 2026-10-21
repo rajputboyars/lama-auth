@@ -28,6 +28,15 @@ npm run dev                           # API on :4000, dashboard on http://localh
 
 Log in as `ADMIN_USERNAME` with your password, then press **Start bot** on the Command Center.
 
+### Run everything in Docker
+
+```bash
+cp .env.example .env                  # set JWT_SECRET and ADMIN_PASSWORD_HASH as above
+docker compose up -d --build          # Mongo + API (:4000) + dashboard on http://localhost:5173
+```
+
+The dashboard container is nginx serving the built client and proxying `/api` and `/socket.io` to the API container. If port 27017 is taken, set `MONGO_HOST_PORT` in `.env`.
+
 ## Markets
 
 | Market                     | Adapter              | Data                                                      | Keys needed                                                                                     |
