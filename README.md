@@ -50,13 +50,16 @@ The dashboard is written in plain language, in Simple English or Hinglish (switc
 
 **Bot Auto-Pilot** (`strategies/autoPilot.ts`) reads the market mood on every candle (`strategies/regime.ts`): uptrend → Trend Rider, sideways → Rubber Band, squeeze (unusually narrow Bollinger bands) → Breakout Hunter, downtrend or unclear → stay out. It sells a held position as soon as the mood turns into a downtrend. **Your Pick** (`strategies/yourPick.ts`) runs whatever you chose for that market (`settings.duel`). API: `GET /api/duel`, `PUT /api/duel/:market`, `POST /api/duel/:market/reset`, `GET /api/chart/:market/:symbol`.
 
-### Deploy the dashboard on Vercel
+### Deploy online (Vercel dashboard + Render API)
 
-Vercel hosts only the dashboard (static files). The API server with the bot, MongoDB and live prices must run somewhere that keeps a process alive (your Docker host, a VPS, Render, Railway, Fly.io…).
+Vercel only hosts the dashboard files. The API (bot engine, database and live sockets) runs on Render, using the `render.yaml` blueprint in this repo.
 
-1. In Vercel, import the repo and set **Root Directory** to `client` (`client/vercel.json` sets the build and page routing).
-2. Add the environment variable `VITE_API_URL` = your API server's public URL, e.g. `https://api.example.com`.
-3. On the API server, add the Vercel address to `CLIENT_ORIGIN` (comma-separated), e.g. `CLIENT_ORIGIN=http://localhost:5173,https://your-app.vercel.app`, and restart it.
+1. **Database:** create a free cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas). Add a database user, allow network access from `0.0.0.0/0`, and copy the connection string, e.g. `mongodb+srv://user:pass@cluster0.xxxxx.mongodb.net/paperbot`.
+2. **Password hash:** run `npm run hash-password -w server -- "your-password"`, or reuse `ADMIN_PASSWORD_HASH` from your local `.env` to keep the same password.
+3. **API on Render:** New → Blueprint → pick this repo. Fill in `MONGO_URI`, `ADMIN_PASSWORD_HASH` and `CLIENT_ORIGIN` (your Vercel address, e.g. `https://your-app.vercel.app`). Render generates `JWT_SECRET`. When it is live, check `https://<your-service>.onrender.com/api/health`.
+4. **Dashboard on Vercel:** Root Directory `client`; add `VITE_API_URL` = the Render URL (no trailing slash) and redeploy. Vite builds the value in, so changing it always needs a redeploy.
+
+On Render's free plan the API sleeps after about 15 minutes without visits, which pauses the bot. The first visit then takes up to a minute to wake it, and the bot resumes on its own.
 
 ## Markets
 

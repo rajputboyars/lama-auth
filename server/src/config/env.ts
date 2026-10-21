@@ -36,6 +36,8 @@ const EnvSchema = z.object({
   KITE_ACCESS_TOKEN: z.string().optional(),
   INDIA_SYMBOLS: csv('RELIANCE,TCS,INFY'),
   GLOBAL_SYMBOLS: csv('GC=F,CL=F,EURUSD=X'),
+  /** Number of reverse proxies in front of the API (Render, nginx…); 0 = none. */
+  TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(0),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

@@ -65,6 +65,7 @@ async function main() {
     auth: { jwtSecret, username: env.ADMIN_USERNAME, passwordHash: env.ADMIN_PASSWORD_HASH },
     clientOrigin: env.CLIENT_ORIGIN,
     maxTickJumpPct: env.MAX_TICK_JUMP_PCT,
+    trustProxy: env.TRUST_PROXY,
   });
   const http = createServer(app);
   const io = attachSocket(http, engine, game, jwtSecret, env.CLIENT_ORIGIN);
