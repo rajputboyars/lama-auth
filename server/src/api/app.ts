@@ -27,6 +27,8 @@ export interface AppDeps {
   clientOrigin: string | string[];
   /** Same bad-tick filter the engine uses, applied to chart candles. */
   maxTickJumpPct?: number;
+  /** Proxy hops to trust for the client IP, so rate limits count real visitors. */
+  trustProxy?: number;
 }
 
 /** You vs Bot wallets: the user's pick and the bot's Auto-Pilot. */
@@ -95,6 +97,7 @@ export function createApp(deps: AppDeps) {
   const { store, engine, game, adapters } = deps;
   const app = express();
   app.disable('x-powered-by');
+  if (deps.trustProxy) app.set('trust proxy', deps.trustProxy);
   app.use(helmet());
   app.use(cors({ origin: deps.clientOrigin }));
   app.use(express.json({ limit: '100kb' }));

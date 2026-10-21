@@ -1,0 +1,29 @@
+# Render Blueprint: the API server (bot engine, REST API and live sockets).
+# The dashboard is hosted separately (e.g. Vercel). See README "Deploy online".
+services:
+  - type: web
+    name: paperbot-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: '1'
+      - key: JWT_SECRET
+        generateValue: true
+      # MongoDB Atlas connection string, e.g. mongodb+srv://user:pass@cluster.mongodb.net/paperbot
+      - key: MONGO_URI
+        sync: false
+      # bcrypt hash of the admin password (npm run hash-password -w server -- "your-password")
+      - key: ADMIN_PASSWORD_HASH
+        sync: false
+      - key: ADMIN_USERNAME
+        value: admin
+      # The dashboard's address(es), comma separated, e.g. https://your-app.vercel.app
+      - key: CLIENT_ORIGIN
+        sync: false
