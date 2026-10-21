@@ -1,11 +1,12 @@
-# Render Blueprint: the API server (bot engine, REST API and live sockets).
-# The dashboard is hosted separately (e.g. Vercel). See README "Deploy online".
+# Render Blueprint: the whole app as one service. The API (bot engine, REST API,
+# live sockets) also serves the dashboard, so everything is at one URL.
+# Only the database is separate (MongoDB Atlas). See README "Deploy online".
 services:
   - type: web
-    name: paperbot-api
+    name: paper-trading-coach
     runtime: docker
     plan: free
-    dockerfilePath: ./server/Dockerfile
+    dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /api/health
     autoDeploy: true
@@ -24,6 +25,3 @@ services:
         sync: false
       - key: ADMIN_USERNAME
         value: admin
-      # The dashboard's address(es), comma separated, e.g. https://your-app.vercel.app
-      - key: CLIENT_ORIGIN
-        sync: false

@@ -38,6 +38,8 @@ const EnvSchema = z.object({
   GLOBAL_SYMBOLS: csv('GC=F,CL=F,EURUSD=X'),
   /** Number of reverse proxies in front of the API (Render, nginx…); 0 = none. */
   TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(0),
+  /** Folder with the built dashboard; when set, the API serves it too (one URL for everything). */
+  STATIC_DIR: z.string().optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

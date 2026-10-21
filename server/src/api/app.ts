@@ -16,6 +16,7 @@ import type { Candle } from '../types.js';
 import { MARKET_IDS, type MarketId } from '../types.js';
 import { type AuthConfig, login, requireAuth } from './auth.js';
 import { HttpError, ah, errorHandler, parse } from './http.js';
+import { DASHBOARD_CSP, serveDashboard } from './static.js';
 
 export interface AppDeps {
   store: Store;
@@ -29,6 +30,8 @@ export interface AppDeps {
   maxTickJumpPct?: number;
   /** Proxy hops to trust for the client IP, so rate limits count real visitors. */
   trustProxy?: number;
+  /** Built dashboard to serve on the same origin (one-service deploys); off when unset. */
+  staticDir?: string;
 }
 
 /** You vs Bot wallets: the user's pick and the bot's Auto-Pilot. */
@@ -98,7 +101,7 @@ export function createApp(deps: AppDeps) {
   const app = express();
   app.disable('x-powered-by');
   if (deps.trustProxy) app.set('trust proxy', deps.trustProxy);
-  app.use(helmet());
+  app.use(helmet({ contentSecurityPolicy: DASHBOARD_CSP }));
   app.use(cors({ origin: deps.clientOrigin }));
   app.use(express.json({ limit: '100kb' }));
 
@@ -431,6 +434,7 @@ export function createApp(deps: AppDeps) {
 
   app.use('/api', api);
   app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found' }));
+  if (deps.staticDir) serveDashboard(app, deps.staticDir);
   app.use(errorHandler);
   return app;
 }
