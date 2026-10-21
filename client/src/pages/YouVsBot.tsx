@@ -261,7 +261,7 @@ function Match({ d, onChanged }: { d: DuelMarket; onChanged(): void }) {
                 <Term id="auto-pilot">{t('vs.botStrategy')}</Term>
               </div>
               {moods.length === 0 ? (
-                <p className="rounded-xl bg-muted/60 px-3 py-2 text-sm text-muted-foreground">
+                <p className="neu-inset px-3 py-2 text-sm text-muted-foreground">
                   {t('vs.botWaiting')}
                 </p>
               ) : (
@@ -269,11 +269,7 @@ function Match({ d, onChanged }: { d: DuelMarket; onChanged(): void }) {
                   {moods.map(([sym, r]) => {
                     const info = MOOD_BY_ID.get(r.mood);
                     return (
-                      <li
-                        key={sym}
-                        className="rounded-xl bg-muted/60 px-3 py-2 text-sm"
-                        title={r.reason}
-                      >
+                      <li key={sym} className="neu-inset px-3 py-2 text-sm" title={r.reason}>
                         <span className="font-semibold">{sym}</span>{' '}
                         <span className="text-muted-foreground">
                           {info?.icon} {t('vs.moodIs')}{' '}
@@ -452,7 +448,7 @@ function SideCard({
 
 function Mini({ k, v }: { k: React.ReactNode; v: React.ReactNode }) {
   return (
-    <div className="rounded-xl bg-muted/60 px-3 py-2">
+    <div className="neu-inset px-3 py-2">
       <div className="text-xs text-muted-foreground">{k}</div>
       <div className="num font-semibold">{v}</div>
     </div>

@@ -25,8 +25,17 @@ export default {
         win: token('win'),
         loss: token('loss'),
         warn: token('warn'),
+        c: {
+          coral: token('c-coral'),
+          teal: token('c-teal'),
+          green: token('c-green'),
+          violet: token('c-violet'),
+          indigo: token('c-indigo'),
+          navy: token('c-navy'),
+        },
       },
       borderRadius: {
+        '3xl': '1.75rem',
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
@@ -37,8 +46,13 @@ export default {
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
       boxShadow: {
-        soft: '0 1px 2px hsl(var(--shadow) / 0.06), 0 8px 24px -12px hsl(var(--shadow) / 0.18)',
-        lift: '0 2px 4px hsl(var(--shadow) / 0.06), 0 16px 40px -16px hsl(var(--shadow) / 0.28)',
+        // Neumorphism: a dark shadow bottom-right and a light one top-left of the same surface.
+        soft: '5px 5px 12px hsl(var(--neu-dark) / 0.55), -5px -5px 12px hsl(var(--neu-light) / 0.9)',
+        lift: '12px 12px 28px hsl(var(--neu-dark) / 0.55), -12px -12px 28px hsl(var(--neu-light) / 0.9)',
+        'neu-inset':
+          'inset 4px 4px 9px hsl(var(--neu-dark) / 0.6), inset -4px -4px 9px hsl(var(--neu-light) / 0.9)',
+        'neu-sm': '3px 3px 6px hsl(var(--neu-dark) / 0.5), -3px -3px 6px hsl(var(--neu-light) / 0.85)',
+        glow: '0 12px 28px -10px hsl(var(--primary) / 0.65)',
       },
       keyframes: {
         pulseDot: {

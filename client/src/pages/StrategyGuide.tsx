@@ -60,7 +60,7 @@ export function StrategyGuide() {
       <Panel title={t('guide.moods')} hint={t('guide.moodsHint')}>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {MOODS.map((m) => (
-            <div key={m.id} data-reveal className="rounded-2xl border bg-background p-4">
+            <div key={m.id} data-reveal className="rounded-3xl bg-card shadow-soft p-4">
               <div className="text-2xl" aria-hidden>
                 {m.icon}
               </div>
@@ -85,7 +85,7 @@ export function StrategyGuide() {
             {(duel.data ?? []).map((d) => {
               const readings = Object.entries(d.moods);
               return (
-                <div key={d.market} className="rounded-xl border bg-background p-3 text-sm">
+                <div key={d.market} className="rounded-3xl bg-card shadow-soft p-3 text-sm">
                   <div className="font-semibold">{MARKET_LABEL[d.market]}</div>
                   {readings.length === 0 ? (
                     <p className="mt-1 text-xs text-muted-foreground">
@@ -224,7 +224,7 @@ function Rule({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl bg-muted/60 p-3">
+    <div className="neu-inset p-3">
       <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider">
         {icon} {title}
       </div>

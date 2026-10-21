@@ -1,6 +1,7 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { Lightbulb, Search, Target } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { CircleCheck, Lightbulb, Search, Target } from 'lucide-react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Empty, PageHeader } from '@/components/common';
@@ -13,6 +14,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { CATEGORIES, GLOSSARY, type GlossaryCategory, TERM_BY_ID } from '@/content/glossary';
+import { useLearned } from '@/hooks/learned';
 import { useLang } from '@/i18n';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +30,11 @@ export function Glossary() {
   const [category, setCategory] = useState<GlossaryCategory | 'all'>('all');
   const [open, setOpen] = useState<string[]>([]);
   const root = useRef<HTMLDivElement>(null);
+  const { learned, markLearned } = useLearned();
+  const learnedCount = GLOSSARY.filter((g) => learned.includes(g.id)).length;
+
+  // Opening a word counts as learning it.
+  useEffect(() => markLearned(open), [open, markLearned]);
 
   const q = query.trim().toLowerCase();
   const visible = useMemo(
@@ -92,6 +99,22 @@ export function Glossary() {
     <div className="space-y-6" ref={root}>
       <PageHeader title={t('terms.title')} intro={t('terms.intro', { n: GLOSSARY.length })} />
 
+      <div className="panel flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2 font-semibold">
+          <CircleCheck className="h-5 w-5 text-win" />
+          {t('terms.progress', { n: learnedCount, total: GLOSSARY.length })}
+        </div>
+        <div className="neu-inset h-3 min-w-[10rem] flex-1 overflow-hidden rounded-full">
+          <motion.div
+            className="h-full rounded-full bg-gradient-to-r from-c-teal to-c-green"
+            initial={{ width: 0 }}
+            animate={{ width: `${(learnedCount / GLOSSARY.length) * 100}%` }}
+            transition={{ duration: 0.8 }}
+          />
+        </div>
+        <span className="text-xs text-muted-foreground">{t('terms.progressHint')}</span>
+      </div>
+
       <div className="sticky top-[57px] z-20 -mx-4 space-y-3 border-b bg-background/90 px-4 py-3 backdrop-blur md:-mx-8 md:px-8">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -133,7 +156,12 @@ export function Glossary() {
               >
                 <AccordionTrigger className="text-base">
                   <span className="space-y-0.5">
-                    <span className="block font-display font-bold">{pick(x.term)}</span>
+                    <span className="flex items-center gap-1.5 font-display font-bold">
+                      {pick(x.term)}
+                      {learned.includes(x.id) && (
+                        <CircleCheck className="h-4 w-4 text-win" aria-label={t('terms.learned')} />
+                      )}
+                    </span>
                     <span className="block text-sm font-normal text-muted-foreground">
                       {pick(x.short)}
                     </span>

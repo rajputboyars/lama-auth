@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLive } from '@/hooks/live';
 import { cn } from '@/lib/utils';
+import { Confetti } from './Confetti';
 
 export function Toasts() {
   const { toasts, dismiss } = useLive();
@@ -18,11 +19,12 @@ export function Toasts() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, x: 40 }}
             className={cn(
-              'pointer-events-auto w-full max-w-sm rounded-2xl border bg-popover p-3 text-left shadow-lift',
+              'pointer-events-auto relative w-full max-w-sm rounded-3xl bg-popover p-4 text-left shadow-lift',
               t.kind === 'achievement' && 'border-primary/40',
               t.kind === 'error' && 'border-loss/40',
             )}
           >
+            {t.kind !== 'error' && <Confetti pieces={t.kind === 'achievement' ? 28 : 14} />}
             <div className="flex items-center gap-3">
               <span className="text-2xl">{t.icon ?? (t.kind === 'xp' ? '✨' : '⚠️')}</span>
               <div>

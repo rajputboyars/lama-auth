@@ -120,7 +120,7 @@ export function Toggle({
 
 export function Empty({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-2xl border border-dashed py-10 text-center text-sm text-muted-foreground">
+    <div className="neu-inset rounded-3xl py-10 text-center text-sm text-muted-foreground">
       {children}
     </div>
   );

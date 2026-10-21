@@ -166,7 +166,7 @@ function StrategyCard({ row, index }: { row: StrategyRow; index: number }) {
 
 function Mini({ k, v }: { k: string; v: React.ReactNode }) {
   return (
-    <div className="rounded-xl bg-muted/70 px-2 py-2">
+    <div className="neu-inset px-2 py-2">
       <div className="text-[11px] text-muted-foreground">{k}</div>
       <div className="num text-sm font-semibold">{v}</div>
     </div>

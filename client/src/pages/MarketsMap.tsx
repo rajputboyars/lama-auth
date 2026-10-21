@@ -51,7 +51,7 @@ export function MarketsMap() {
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <span
-                    className="grid h-12 w-12 place-items-center rounded-2xl bg-muted text-2xl"
+                    className="grid h-12 w-12 place-items-center rounded-2xl bg-card text-2xl shadow-neu-sm"
                     aria-hidden
                   >
                     {ICON[m.id]}
@@ -101,7 +101,7 @@ export function MarketsMap() {
                     <Link
                       key={s}
                       to={`/charts?market=${m.id}&symbol=${encodeURIComponent(s)}`}
-                      className="inline-flex items-center gap-1.5 rounded-lg border bg-background px-2.5 py-1 text-xs transition hover:border-primary hover:text-primary"
+                      className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs shadow-neu-sm transition hover:text-primary active:shadow-neu-inset"
                     >
                       <ChartCandlestick className="h-3.5 w-3.5" />
                       <span className="font-semibold">{s}</span>

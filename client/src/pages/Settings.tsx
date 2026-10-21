@@ -241,7 +241,7 @@ export function Settings() {
                 strategies: { ...draft.strategies, [s.id]: { ...cur, ...patch } },
               });
             return (
-              <div key={s.id} className="rounded-2xl border bg-background p-4">
+              <div key={s.id} className="rounded-3xl bg-card shadow-soft p-4">
                 <div className="flex items-center justify-between gap-2">
                   <div>
                     <div className="font-semibold">
@@ -305,7 +305,7 @@ export function Settings() {
             const set = (patch: Partial<CostConfig>) =>
               setDraft({ ...draft, costs: { ...draft.costs, [m]: { ...c, ...patch } } });
             return (
-              <div key={m} className="rounded-2xl border bg-background p-4">
+              <div key={m} className="rounded-3xl bg-card shadow-soft p-4">
                 <div className="mb-3 font-semibold">{MARKET_LABEL[m]}</div>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
                   {COST_FIELDS.map((f) => (

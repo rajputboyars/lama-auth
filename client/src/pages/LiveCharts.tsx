@@ -239,7 +239,7 @@ export function LiveCharts() {
         </div>
 
         <ErrorNote error={history.error} />
-        <div className="rounded-xl border bg-background p-2">
+        <div className="neu-inset rounded-3xl p-2">
           {candles.length > 0 ? (
             <LiveChart
               candles={candles}

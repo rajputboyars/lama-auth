@@ -22,7 +22,8 @@ export interface Toast {
 interface LiveCtx {
   connected: boolean;
   status: BotStatus | null;
-  prices: Record<string, PriceUpdate & { prev?: number }>;
+  /** `prev` is the previous tick, `first` the first price seen since the page opened. */
+  prices: Record<string, PriceUpdate & { prev?: number; first?: number }>;
   trades: Trade[];
   toasts: Toast[];
   soundOn: boolean;
@@ -81,7 +82,7 @@ export function LiveProvider({ token, children }: { token: string; children: Rea
     socket.on('price:update', (p: PriceUpdate) =>
       setPrices((m) => {
         const key = `${p.market}:${p.symbol}`;
-        return { ...m, [key]: { ...p, prev: m[key]?.price } };
+        return { ...m, [key]: { ...p, prev: m[key]?.price, first: m[key]?.first ?? p.price } };
       }),
     );
     socket.on('trade:new', (t: Trade) => {

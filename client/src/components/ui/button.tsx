@@ -4,24 +4,24 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-semibold transition-all active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground shadow-soft hover:bg-primary/90',
+        default: 'bg-primary text-primary-foreground shadow-glow hover:brightness-105',
         destructive:
-          'bg-destructive text-destructive-foreground shadow-soft hover:bg-destructive/90',
-        outline: 'border border-input bg-card shadow-sm hover:bg-muted',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'hover:bg-muted',
+          'bg-destructive text-destructive-foreground shadow-[0_12px_28px_-10px_hsl(var(--destructive)/0.6)] hover:brightness-105',
+        outline: 'bg-card shadow-soft hover:text-primary active:shadow-neu-inset',
+        secondary: 'bg-card text-secondary-foreground shadow-neu-sm hover:text-primary',
+        ghost: 'hover:bg-card hover:shadow-neu-sm',
         link: 'text-primary underline-offset-4 hover:underline',
-        win: 'bg-win text-white shadow-soft hover:bg-win/90',
+        win: 'bg-win text-white shadow-[0_12px_28px_-10px_hsl(var(--win)/0.65)] hover:brightness-105',
       },
       size: {
         default: 'h-10 px-4 py-2',
-        sm: 'h-8 rounded-lg px-3 text-xs',
-        lg: 'h-12 rounded-2xl px-6 text-base',
-        icon: 'h-9 w-9',
+        sm: 'h-8 px-3.5 text-xs',
+        lg: 'h-12 px-7 text-base',
+        icon: 'h-10 w-10',
       },
     },
     defaultVariants: { variant: 'default', size: 'default' },

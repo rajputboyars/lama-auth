@@ -31,10 +31,9 @@ export function TradeCard({ trade, onReview }: { trade: Trade; onReview?: (t: Tr
       exit={{ opacity: 0 }}
       transition={{ type: 'spring', stiffness: 300, damping: 28 }}
       className={cn(
-        'rounded-2xl border bg-card p-4 shadow-soft',
-        !failed && win && 'border-l-4 border-l-win',
-        !failed && loss && 'border-l-4 border-l-loss',
-        !failed && !closing && 'border-l-4 border-l-primary',
+        'rounded-3xl bg-card p-4 shadow-soft',
+        !failed && win && 'ring-1 ring-win/25',
+        !failed && loss && 'ring-1 ring-loss/25',
       )}
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -93,7 +92,7 @@ export function TradeCard({ trade, onReview }: { trade: Trade; onReview?: (t: Tr
           <Field k={t('trade.screenPrice')} v={price(trade.refPrice)} />
         )}
       </div>
-      <p className="mt-3 rounded-lg bg-muted/60 px-3 py-2 text-xs text-muted-foreground">
+      <p className="mt-3 neu-inset px-3 py-2 text-xs text-muted-foreground">
         <span className="font-semibold text-foreground">{t('trade.why')}</span> {trade.reason}
       </p>
 

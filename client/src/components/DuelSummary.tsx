@@ -39,7 +39,7 @@ export function DuelSummary() {
             <Link
               key={d.market}
               to={`/vs?market=${d.market}`}
-              className="rounded-2xl border bg-background p-3 transition hover:-translate-y-0.5 hover:shadow-soft"
+              className="rounded-3xl bg-card shadow-soft p-3 transition hover:-translate-y-0.5 hover:shadow-soft"
             >
               <div className="flex items-center justify-between text-sm font-semibold">
                 {MARKET_LABEL[d.market]}
