@@ -140,7 +140,7 @@ function SideLink({ item }: { item: NavItem }) {
           'flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-all',
           isActive
             ? 'bg-card font-semibold text-primary shadow-neu-sm'
-            : 'text-muted-foreground hover:translate-x-0.5 hover:text-foreground',
+            : 'text-muted-foreground hover:text-foreground',
         )
       }
     >
@@ -191,7 +191,7 @@ export function Layout() {
               </div>
             </div>
           </Link>
-          <nav className="flex flex-1 flex-col gap-5 overflow-y-auto">
+          <nav className="-mx-2 flex flex-1 flex-col gap-5 overflow-y-auto overflow-x-hidden px-2 py-1 [scrollbar-gutter:stable]">
             {NAV.map((g) => (
               <div key={g.group} className="flex flex-col gap-0.5">
                 <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/80">

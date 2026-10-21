@@ -78,6 +78,29 @@
 
   * {
     @apply border-border;
+    /* Slim, theme-coloured scrollbars with no arrow buttons (Firefox and Chrome 121+). */
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary) / 0.3) transparent;
+  }
+  /* Older WebKit/Blink fallback. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-button {
+    display: none;
+  }
+  ::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 9999px;
+    background: hsl(var(--primary) / 0.3) padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.55) padding-box;
   }
   body {
     @apply bg-background text-foreground;
@@ -145,6 +168,20 @@
   }
   .input {
     @apply w-full rounded-2xl border-0 bg-background px-4 py-2.5 text-sm text-foreground shadow-neu-inset outline-none focus:ring-2 focus:ring-primary/30;
+  }
+}
+
+@layer utilities {
+  /* Still scrolls (wheel, touch, keyboard), just without a visible bar. */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  /* Fades the right edge so a hidden-scrollbar row hints that it scrolls. */
+  .fade-right {
+    mask-image: linear-gradient(to right, black calc(100% - 2.5rem), transparent);
   }
 }
 

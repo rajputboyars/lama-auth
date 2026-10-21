@@ -126,7 +126,7 @@ export function Glossary() {
             aria-label={t('terms.search')}
           />
         </div>
-        <div className="flex gap-1.5 overflow-x-auto pb-1">
+        <div className="scrollbar-none fade-right -mx-1 flex gap-1.5 overflow-x-auto px-1 py-1.5 pr-10">
           <Chip active={category === 'all'} onClick={() => setCategory('all')}>
             {t('terms.all')}
           </Chip>
