@@ -30,6 +30,8 @@ interface LiveCtx {
   dismiss(id: number): void;
   setStatus(s: BotStatus): void;
   walletTick: number;
+  /** Latest marked-to-market equity per `market:strategy` wallet, from live wallet updates. */
+  equities: Record<string, { equity: number; time: number }>;
 }
 
 const Ctx = createContext<LiveCtx | null>(null);
@@ -51,6 +53,7 @@ export function LiveProvider({ token, children }: { token: string; children: Rea
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [soundOn, setSoundState] = useState(readSoundPref);
   const [walletTick, setWalletTick] = useState(0);
+  const [equities, setEquities] = useState<LiveCtx['equities']>({});
   const soundRef = useRef(soundOn);
   const nextId = useRef(1);
 
@@ -86,7 +89,13 @@ export function LiveProvider({ token, children }: { token: string; children: Rea
       if (soundRef.current)
         playTradeSound(t.status === 'failed' ? 'fail' : t.pnl < 0 ? 'loss' : 'win');
     });
-    socket.on('wallet:update', () => setWalletTick((n) => n + 1));
+    socket.on('wallet:update', (w: { market: string; strategy: string; equity: number }) => {
+      setWalletTick((n) => n + 1);
+      setEquities((m) => ({
+        ...m,
+        [`${w.market}:${w.strategy}`]: { equity: w.equity, time: Date.now() },
+      }));
+    });
     socket.on('game:xp', (e: { amount: number; reason: string }) =>
       push({ kind: 'xp', title: `+${e.amount} XP`, body: e.reason }),
     );
@@ -118,6 +127,7 @@ export function LiveProvider({ token, children }: { token: string; children: Rea
         dismiss,
         setStatus,
         walletTick,
+        equities,
       }}
     >
       {children}

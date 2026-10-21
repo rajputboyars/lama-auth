@@ -1,10 +1,23 @@
 import { motion } from 'framer-motion';
+import { CircleCheck, OctagonX, RotateCcw, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { ErrorNote, Panel, Toggle } from '../components/ui';
-import { useApi } from '../hooks/useApi';
-import { useLive } from '../hooks/live';
-import { api } from '../lib/api';
-import { MARKET_LABEL } from '../lib/format';
+import { Term } from '@/components/Term';
+import { ErrorNote, Note, PageHeader, Panel, Toggle } from '@/components/common';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { GUIDE_BY_ID, strategyName } from '@/content/strategies';
+import { useApi } from '@/hooks/useApi';
+import { useLive } from '@/hooks/live';
+import { type TKey, useLang } from '@/i18n';
+import { api } from '@/lib/api';
+import { MARKET_LABEL } from '@/lib/format';
 import type {
   BotStatus,
   CostConfig,
@@ -12,41 +25,58 @@ import type {
   RiskConfig,
   Settings as SettingsT,
   StrategyInfo,
-} from '../lib/types';
+} from '@/lib/types';
+import { cn } from '@/lib/utils';
 
-const COST_FIELDS: { key: keyof CostConfig; label: string; step: number; hint?: string }[] = [
-  { key: 'feePct', label: 'Fee %', step: 0.001 },
-  { key: 'feeFixed', label: 'Fixed fee', step: 0.01 },
-  { key: 'feeMin', label: 'Min fee', step: 0.01 },
-  { key: 'spreadPct', label: 'Spread %', step: 0.01 },
-  { key: 'slippagePct', label: 'Slippage %', step: 0.01 },
-  { key: 'delayMs', label: 'Delay (ms)', step: 50 },
-  { key: 'failChance', label: 'Fail chance (0–1)', step: 0.005 },
+const COST_FIELDS: { key: keyof CostConfig; label: TKey; term: string; step: number }[] = [
+  { key: 'feePct', label: 'set.cost.feePct', term: 'fees', step: 0.001 },
+  { key: 'feeFixed', label: 'set.cost.feeFixed', term: 'fees', step: 0.01 },
+  { key: 'feeMin', label: 'set.cost.feeMin', term: 'fees', step: 0.01 },
+  { key: 'spreadPct', label: 'set.cost.spread', term: 'spread', step: 0.01 },
+  { key: 'slippagePct', label: 'set.cost.slippage', term: 'slippage', step: 0.01 },
+  { key: 'delayMs', label: 'set.cost.delay', term: 'delay', step: 50 },
+  { key: 'failChance', label: 'set.cost.fail', term: 'failed-order', step: 0.005 },
 ];
 
 const RISK_FIELDS: {
   key: Exclude<keyof RiskConfig, 'killSwitch'>;
-  label: string;
+  label: TKey;
+  hint: TKey;
+  term: string;
   step: number;
-  hint: string;
 }[] = [
-  { key: 'maxTradePct', label: 'Max trade size (% of equity)', step: 1, hint: 'Per new position' },
+  {
+    key: 'maxTradePct',
+    label: 'set.risk.maxTradePct',
+    hint: 'set.risk.maxTradePctHint',
+    term: 'position-size',
+    step: 1,
+  },
   {
     key: 'maxTradeValue',
-    label: 'Max trade value (0 = off)',
+    label: 'set.risk.maxTradeValue',
+    hint: 'set.risk.maxTradeValueHint',
+    term: 'position-size',
     step: 10,
-    hint: 'In wallet currency',
   },
   {
     key: 'dailyLossLimitPct',
-    label: 'Daily loss limit %',
+    label: 'set.risk.daily',
+    hint: 'set.risk.dailyHint',
+    term: 'daily-loss-limit',
     step: 0.5,
-    hint: 'Stops new entries for the day',
   },
-  { key: 'maxOpenPositions', label: 'Max open positions', step: 1, hint: 'Per wallet' },
+  {
+    key: 'maxOpenPositions',
+    label: 'set.risk.maxOpen',
+    hint: 'set.risk.maxOpenHint',
+    term: 'max-open-positions',
+    step: 1,
+  },
 ];
 
 export function Settings() {
+  const { t, pick } = useLang();
   const remote = useApi<SettingsT>('/settings');
   const strategies = useApi<StrategyInfo[]>('/strategies');
   const { status, setStatus } = useLive();
@@ -58,7 +88,7 @@ export function Settings() {
     if (remote.data) setDraft(structuredClone(remote.data));
   }, [remote.data]);
 
-  async function save(patch: Partial<SettingsT>, note = 'Saved') {
+  async function save(patch: Partial<SettingsT>, note = t('set.saved')) {
     setError(null);
     setMsg(null);
     try {
@@ -72,23 +102,19 @@ export function Settings() {
   }
 
   async function killSwitch(on: boolean) {
-    if (
-      on &&
-      !confirm('Engage the KILL SWITCH? All markets stop trading immediately, including exits.')
-    )
-      return;
+    if (on && !confirm(t('set.kill.confirm'))) return;
     if (on) await api('/bot/stop', { method: 'POST' }).catch(() => undefined);
     await save(
       { risk: { ...draft!.risk, killSwitch: on } },
-      on ? 'Kill switch ENGAGED. All trading halted.' : 'Kill switch released.',
+      on ? t('set.kill.engaged') : t('set.kill.released'),
     );
   }
 
   async function resetWallets() {
-    if (!confirm('Reset ALL paper wallets to their starting cash? Trade history is kept.')) return;
+    if (!confirm(t('set.reset.confirm'))) return;
     try {
       const r = await api<{ reset: number }>('/wallets/reset', { method: 'POST', body: {} });
-      setMsg(`Reset ${r.reset} wallets`);
+      setMsg(t('set.reset.done', { n: r.reset }));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -97,61 +123,67 @@ export function Settings() {
   if (!draft) return <ErrorNote error={remote.error} />;
   const killOn = draft.risk.killSwitch;
   const num = (v: string) => (v === '' ? 0 : Number(v));
+  const SaveBtn = ({ onClick }: { onClick(): void }) => (
+    <Button size="sm" onClick={onClick}>
+      <Save /> {t('common.save')}
+    </Button>
+  );
 
   return (
-    <div className="space-y-4">
-      <h1 className="font-display text-2xl font-black tracking-wide md:text-3xl">Settings</h1>
+    <div className="space-y-6">
+      <PageHeader title={t('set.title')} intro={t('set.intro')} />
 
       <motion.div
-        animate={
-          killOn ? { boxShadow: ['0 0 0px #f87171', '0 0 40px #f87171', '0 0 0px #f87171'] } : {}
-        }
+        animate={killOn ? { scale: [1, 1.01, 1] } : {}}
         transition={{ repeat: Infinity, duration: 2 }}
-        className={`panel flex flex-col items-center gap-3 border-2 text-center ${killOn ? 'border-loss bg-loss/10' : 'border-loss/40'}`}
+        className={cn(
+          'panel flex flex-col items-center gap-3 border-2 text-center sm:flex-row sm:text-left',
+          killOn ? 'border-loss bg-loss/10' : 'border-loss/30',
+        )}
       >
-        <span className="label text-loss">Emergency</span>
         <button
           onClick={() => killSwitch(!killOn)}
-          className={`h-28 w-28 rounded-full border-4 font-display text-sm font-black tracking-widest transition active:scale-95 ${
-            killOn
-              ? 'border-loss bg-loss text-void shadow-glow-loss'
-              : 'border-loss bg-loss/20 text-loss hover:bg-loss/40 hover:shadow-glow-loss'
-          }`}
+          className={cn(
+            'grid h-24 w-24 shrink-0 place-items-center rounded-full border-4 border-loss font-display text-xs font-extrabold uppercase tracking-wider transition active:scale-95',
+            killOn ? 'bg-loss text-white' : 'bg-loss/10 text-loss hover:bg-loss/20',
+          )}
           aria-pressed={killOn}
         >
-          {killOn ? 'RELEASE' : 'KILL SWITCH'}
+          <span className="flex flex-col items-center gap-1">
+            <OctagonX className="h-6 w-6" />
+            {killOn ? t('set.kill.release') : t('set.kill.button')}
+          </span>
         </button>
-        <p className="max-w-md text-xs text-slate-400">
-          {killOn
-            ? 'All trading is halted. The bot cannot be started until you release it.'
-            : 'Stops the bot and blocks every new trade on every market.'}
-        </p>
+        <div className="space-y-1">
+          <div className="font-display text-lg font-bold">
+            <Term id="kill-switch">{t('set.kill.title')}</Term>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {killOn ? t('set.kill.onHint') : t('set.kill.offHint')}
+          </p>
+        </div>
       </motion.div>
 
       {msg && (
-        <div className="rounded-lg border border-win/40 bg-win/10 px-3 py-2 text-sm text-win">
-          {msg}
+        <div className="flex items-center gap-2 rounded-xl border border-win/30 bg-win/10 px-3 py-2 text-sm text-win">
+          <CircleCheck className="h-4 w-4" /> {msg}
         </div>
       )}
       <ErrorNote error={error} />
 
       <Panel
-        title="Risk limits"
-        action={
-          <button
-            className="btn-primary px-3 py-1 text-xs"
-            onClick={() => save({ risk: draft.risk })}
-          >
-            Save
-          </button>
-        }
+        title={<Term id="risk">{t('set.risk.title')}</Term>}
+        hint={t('set.risk.hint')}
+        action={<SaveBtn onClick={() => save({ risk: draft.risk })} />}
       >
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {RISK_FIELDS.map((f) => (
-            <label key={f.key} className="block space-y-1">
-              <span className="label">{f.label}</span>
-              <input
-                className="input num"
+            <label key={f.key} className="block space-y-1.5">
+              <span className="text-sm font-medium">
+                <Term id={f.term}>{t(f.label)}</Term>
+              </span>
+              <Input
+                className="num"
                 type="number"
                 step={f.step}
                 value={draft.risk[f.key]}
@@ -159,84 +191,103 @@ export function Settings() {
                   setDraft({ ...draft, risk: { ...draft.risk, [f.key]: num(e.target.value) } })
                 }
               />
-              <span className="text-[11px] text-slate-500">{f.hint}</span>
+              <span className="block text-xs text-muted-foreground">{t(f.hint)}</span>
             </label>
           ))}
         </div>
       </Panel>
 
       <Panel
-        title="Strategies"
+        title={<Term id="strategy">{t('set.strat.title')}</Term>}
+        hint={t('set.strat.hint')}
         action={
-          <button
-            className="btn-primary px-3 py-1 text-xs"
+          <SaveBtn
             onClick={() =>
               save({ strategies: draft.strategies, candleInterval: draft.candleInterval })
             }
-          >
-            Save
-          </button>
+          />
         }
       >
-        <label className="mb-4 flex items-center gap-3 text-sm">
-          <span className="label">Live candle interval</span>
-          <select
-            className="input w-auto"
+        <div className="mb-4 flex flex-wrap items-center gap-3 text-sm">
+          <span className="font-medium">
+            <Term id="timeframe">{t('set.strat.interval')}</Term>
+          </span>
+          <Select
             value={draft.candleInterval}
-            onChange={(e) =>
-              setDraft({ ...draft, candleInterval: e.target.value as SettingsT['candleInterval'] })
+            onValueChange={(v) =>
+              setDraft({ ...draft, candleInterval: v as SettingsT['candleInterval'] })
             }
           >
-            {['1m', '5m', '15m', '1h'].map((i) => (
-              <option key={i}>{i}</option>
-            ))}
-          </select>
-        </label>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(['1m', '5m', '15m', '1h'] as const).map((i) => (
+                <SelectItem key={i} value={i}>
+                  {t(`tf.${i}`)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="grid gap-3 lg:grid-cols-2">
           {(strategies.data ?? []).map((s) => {
             const cur = draft.strategies[s.id];
             if (!cur) return null;
+            const guide = GUIDE_BY_ID.get(s.id);
             const set = (patch: Partial<typeof cur>) =>
               setDraft({
                 ...draft,
                 strategies: { ...draft.strategies, [s.id]: { ...cur, ...patch } },
               });
             return (
-              <div key={s.id} className="rounded-xl border border-edge bg-void/40 p-3">
+              <div key={s.id} className="rounded-2xl border bg-background p-4">
                 <div className="flex items-center justify-between gap-2">
                   <div>
-                    <div className="font-semibold">{s.name}</div>
-                    <div className="text-[11px] text-slate-500">
+                    <div className="font-semibold">
+                      {guide?.icon} {strategyName(s.id, pick)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
                       {s.markets === 'all'
-                        ? 'All markets'
+                        ? t('common.allMarkets')
                         : s.markets.map((m) => MARKET_LABEL[m]).join(', ')}
                     </div>
                   </div>
                   <Toggle
                     checked={cur.enabled}
                     onChange={(v) => set({ enabled: v })}
-                    label={`Enable ${s.name}`}
+                    label={t('set.strat.enable', { name: strategyName(s.id, pick) })}
                   />
                 </div>
-                <p className="mt-1 text-xs text-slate-400">{s.description}</p>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  {s.params.map((p) => (
-                    <label key={p.key} className="block space-y-1">
-                      <span className="text-[11px] text-slate-400">{p.label}</span>
-                      <input
-                        className="input num py-1"
-                        type="number"
-                        min={p.min}
-                        max={p.max}
-                        step={p.step}
-                        value={cur.params[p.key] ?? p.default}
-                        onChange={(e) =>
-                          set({ params: { ...cur.params, [p.key]: num(e.target.value) } })
-                        }
-                      />
-                    </label>
-                  ))}
-                </div>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {guide
+                    ? pick(guide.oneLiner)
+                    : s.id === 'user'
+                      ? t('set.strat.userHint')
+                      : s.description}
+                </p>
+                {s.params.length > 0 && (
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    {s.params.map((p) => (
+                      <label key={p.key} className="block space-y-1">
+                        <span className="text-xs text-muted-foreground">
+                          {guide?.paramLabels?.[p.key] ? pick(guide.paramLabels[p.key]) : p.label}
+                        </span>
+                        <Input
+                          className="num h-9"
+                          type="number"
+                          min={p.min}
+                          max={p.max}
+                          step={p.step}
+                          value={cur.params[p.key] ?? p.default}
+                          onChange={(e) =>
+                            set({ params: { ...cur.params, [p.key]: num(e.target.value) } })
+                          }
+                        />
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -244,34 +295,26 @@ export function Settings() {
       </Panel>
 
       <Panel
-        title="Costs per market"
-        action={
-          <button
-            className="btn-primary px-3 py-1 text-xs"
-            onClick={() => save({ costs: draft.costs })}
-          >
-            Save
-          </button>
-        }
+        title={t('set.cost.title')}
+        hint={t('set.cost.hint')}
+        action={<SaveBtn onClick={() => save({ costs: draft.costs })} />}
       >
-        <p className="mb-3 text-xs text-slate-400">
-          Percent fields are in percent (0.1 = 0.1%). Keep these pessimistic: paper results should
-          never look better than reality.
-        </p>
         <div className="space-y-4">
           {(Object.keys(draft.costs) as MarketId[]).map((m) => {
             const c = draft.costs[m];
             const set = (patch: Partial<CostConfig>) =>
               setDraft({ ...draft, costs: { ...draft.costs, [m]: { ...c, ...patch } } });
             return (
-              <div key={m} className="rounded-xl border border-edge bg-void/40 p-3">
-                <div className="mb-2 font-semibold">{MARKET_LABEL[m]}</div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+              <div key={m} className="rounded-2xl border bg-background p-4">
+                <div className="mb-3 font-semibold">{MARKET_LABEL[m]}</div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
                   {COST_FIELDS.map((f) => (
                     <label key={f.key} className="block space-y-1">
-                      <span className="text-[11px] text-slate-400">{f.label}</span>
-                      <input
-                        className="input num py-1"
+                      <span className="text-xs text-muted-foreground">
+                        <Term id={f.term}>{t(f.label)}</Term>
+                      </span>
+                      <Input
+                        className="num h-9"
                         type="number"
                         step={f.step}
                         min={0}
@@ -282,27 +325,38 @@ export function Settings() {
                   ))}
                 </div>
                 {c.taxes.length > 0 && (
-                  <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {c.taxes.map((t, i) => (
-                      <label key={t.name} className="block space-y-1">
-                        <span className="text-[11px] text-slate-400">
-                          {t.name} ({t.side},{' '}
-                          {t.base === 'fees' ? '% of fees' : t.fixed ? 'fixed' : '%'})
+                  <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {c.taxes.map((x, i) => (
+                      <label key={x.name} className="block space-y-1">
+                        <span className="text-xs text-muted-foreground">
+                          <Term id="taxes">{x.name}</Term> (
+                          {x.side === 'both'
+                            ? t('set.tax.both')
+                            : x.side === 'buy'
+                              ? t('common.buy')
+                              : t('common.sell')}
+                          ,{' '}
+                          {x.base === 'fees'
+                            ? t('set.tax.ofFees')
+                            : x.fixed
+                              ? t('set.tax.fixed')
+                              : '%'}
+                          )
                         </span>
-                        <input
-                          className="input num py-1"
+                        <Input
+                          className="num h-9"
                           type="number"
                           step={0.001}
                           min={0}
-                          value={t.fixed ?? t.pct}
+                          value={x.fixed ?? x.pct}
                           onChange={(e) =>
                             set({
-                              taxes: c.taxes.map((x, j) =>
+                              taxes: c.taxes.map((y, j) =>
                                 j !== i
-                                  ? x
-                                  : x.fixed !== undefined
-                                    ? { ...x, fixed: num(e.target.value) }
-                                    : { ...x, pct: num(e.target.value) },
+                                  ? y
+                                  : y.fixed !== undefined
+                                    ? { ...y, fixed: num(e.target.value) }
+                                    : { ...y, pct: num(e.target.value) },
                               ),
                             })
                           }
@@ -317,18 +371,19 @@ export function Settings() {
         </div>
       </Panel>
 
-      <Panel title="Wallets">
+      <Panel title={<Term id="wallet">{t('set.wallets.title')}</Term>} hint={t('set.wallets.hint')}>
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            className="btn-ghost border-loss/50 text-loss"
-            onClick={resetWallets}
-            disabled={!!status?.running}
-          >
-            Reset all paper wallets
-          </button>
-          {status?.running && <span className="text-xs text-slate-500">Stop the bot first.</span>}
+          <Button variant="destructive" onClick={resetWallets} disabled={!!status?.running}>
+            <RotateCcw /> {t('set.wallets.reset')}
+          </Button>
+          {status?.running && (
+            <span className="text-xs text-muted-foreground">{t('common.stopFirst')}</span>
+          )}
         </div>
       </Panel>
+      <Note>
+        <p>{t('set.footer')}</p>
+      </Note>
     </div>
   );
 }

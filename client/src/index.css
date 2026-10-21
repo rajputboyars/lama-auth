@@ -3,39 +3,112 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --background: 228 33% 98%;
+    --foreground: 230 30% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 230 30% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 230 30% 12%;
+    --primary: 243 75% 57%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 230 30% 95%;
+    --secondary-foreground: 230 30% 18%;
+    --muted: 230 25% 95%;
+    --muted-foreground: 230 12% 42%;
+    --accent: 243 90% 96%;
+    --accent-foreground: 243 60% 40%;
+    --destructive: 0 72% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 230 22% 89%;
+    --input: 230 22% 86%;
+    --ring: 243 75% 57%;
+    --win: 158 80% 30%;
+    --loss: 0 72% 48%;
+    --warn: 35 92% 40%;
+    --shadow: 230 40% 20%;
+    --radius: 0.9rem;
+    color-scheme: light;
+  }
+
+  .dark {
+    --background: 230 28% 7%;
+    --foreground: 228 30% 94%;
+    --card: 230 26% 10%;
+    --card-foreground: 228 30% 94%;
+    --popover: 230 26% 11%;
+    --popover-foreground: 228 30% 94%;
+    --primary: 243 90% 72%;
+    --primary-foreground: 243 50% 12%;
+    --secondary: 230 20% 16%;
+    --secondary-foreground: 228 30% 92%;
+    --muted: 230 20% 15%;
+    --muted-foreground: 228 14% 65%;
+    --accent: 243 40% 20%;
+    --accent-foreground: 243 90% 85%;
+    --destructive: 0 75% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 230 18% 20%;
+    --input: 230 18% 24%;
+    --ring: 243 90% 72%;
+    --win: 155 65% 50%;
+    --loss: 0 85% 66%;
+    --warn: 38 95% 60%;
+    --shadow: 230 60% 2%;
+    color-scheme: dark;
+  }
+
+  * {
+    @apply border-border;
+  }
   body {
-    background:
-      radial-gradient(ellipse at top, rgba(34, 211, 238, 0.08), transparent 60%),
-      radial-gradient(ellipse at bottom right, rgba(167, 139, 250, 0.08), transparent 60%), #05070d;
+    @apply bg-background text-foreground;
     min-height: 100vh;
+    background-image: radial-gradient(
+      60rem 30rem at 85% -10%,
+      hsl(var(--primary) / 0.08),
+      transparent 70%
+    );
+    background-repeat: no-repeat;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight;
   }
   :focus-visible {
-    outline: 2px solid #22d3ee;
+    outline: 2px solid hsl(var(--ring));
     outline-offset: 2px;
   }
 }
 
 @layer components {
   .panel {
-    @apply rounded-2xl border border-edge bg-panel/80 p-4 backdrop-blur;
+    @apply rounded-2xl border bg-card p-4 text-card-foreground shadow-soft md:p-5;
   }
   .label {
-    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400;
+    @apply text-xs font-semibold uppercase tracking-wider text-muted-foreground;
   }
   .num {
     @apply font-mono tabular-nums;
   }
+  .page-title {
+    @apply font-display text-3xl font-extrabold tracking-tight md:text-4xl;
+  }
+  .page-intro {
+    @apply max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base;
+  }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply btn border-neon-cyan/60 bg-neon-cyan/10 text-neon-cyan hover:bg-neon-cyan/20 hover:shadow-glow;
+    @apply btn border-transparent bg-primary text-primary-foreground shadow-soft hover:bg-primary/90;
   }
   .btn-ghost {
-    @apply btn border-edge text-slate-300 hover:border-slate-500;
+    @apply btn bg-card text-foreground hover:bg-muted;
   }
   .input {
-    @apply w-full rounded-lg border border-edge bg-void/60 px-3 py-2 text-sm text-slate-100 outline-none focus:border-neon-cyan;
+    @apply w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20;
   }
 }
 

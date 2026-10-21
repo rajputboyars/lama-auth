@@ -196,3 +196,24 @@ export interface BacktestResult {
   candles: number;
   currency: Currency;
 }
+
+export interface MoodReading {
+  mood: 'uptrend' | 'downtrend' | 'sideways' | 'squeeze' | 'unclear';
+  /** Strategy Auto-Pilot uses for this symbol, or 'none' when it stays out. */
+  chosen: string;
+  reason: string;
+  time: number;
+}
+
+export interface DuelMarket {
+  market: MarketId;
+  name: string;
+  currency: Currency;
+  open: boolean;
+  enabled: boolean;
+  userStrategy: string;
+  you: StrategyRow | null;
+  bot: StrategyRow | null;
+  moods: Record<string, MoodReading>;
+  history: { you: EquityPoint[]; bot: EquityPoint[] };
+}
