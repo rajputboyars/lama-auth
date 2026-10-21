@@ -25,6 +25,7 @@ import { strategyName } from '@/content/strategies';
 import { useApi } from '@/hooks/useApi';
 import { useLang } from '@/i18n';
 import { api } from '@/lib/api';
+import { renderReason } from '@/lib/explain';
 import { MARKET_LABEL, money, pct, price, qty, tone } from '@/lib/format';
 import type { BacktestResult, MarketInfo, StrategyInfo } from '@/lib/types';
 
@@ -218,7 +219,7 @@ export function BacktestLab() {
                 </TableHeader>
                 <TableBody className="num">
                   {result.trades.map((x, i) => (
-                    <TableRow key={i} title={x.reason}>
+                    <TableRow key={i} title={renderReason(x.reason, t, pick)}>
                       <TableCell className="font-sans text-xs text-muted-foreground">
                         {new Date(x.time).toLocaleString()}
                       </TableCell>

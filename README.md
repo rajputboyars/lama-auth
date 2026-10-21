@@ -41,6 +41,8 @@ The dashboard container is nginx serving the built client and proxying `/api` an
 
 The dashboard is written in plain language, in Simple English or Hinglish (switch in the header), on a light screen with a dark toggle. Words with a dotted underline show a short meaning on hover or tap, with a link to the full explanation.
 
+A first-time **setup wizard** (markets → your strategy → safety level → start) runs after the first login; reopen it from **Help** or Settings. The **Simple** view (default) hides Markets, Practice Test, Strategy Scores and advanced numbers; switch to **Expert** in the sidebar or the More menu. Every bot decision is shown in plain words (`client/src/lib/explain.ts`), with the original technical reason one click away. Safety limits come as **Careful / Balanced / Bold** presets.
+
 | Page        | What it does                                                                                                                                                                            |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Live Charts | Candles, OHLC bars, Heikin-Ashi, line, area and baseline charts; 1m to 1d candles; volume, moving averages and Bollinger bands; arrows where the bot traded; updates on every live tick |

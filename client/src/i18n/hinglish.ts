@@ -445,4 +445,123 @@ export const hinglish: Record<keyof typeof en, string> = {
   'terms.learned': 'seekha',
   'pwa.offline': 'Aap offline ho. Save pages khulenge, lekin live price ke liye internet chahiye.',
   'pwa.install': 'App install karo',
+
+  // Plain-language reasons for bot decisions (lib/explain.ts)
+  'why.failed': 'Order poora nahi hua: {why}. Bot trade karna chahta tha kyunki {inner}',
+  'why.auto.downSell':
+    'Market downtrend mein chala gaya, isliye bot ne aapka paisa bachaane ke liye becha.',
+  'why.auto.using': 'Market {mood} hai, isliye bot ne {strategy} use ki: {inner}',
+  'why.auto.waiting':
+    'Market {mood} hai, isliye bot {strategy} use karta hai, jo abhi intezaar kar rahi hai: {inner}',
+  'why.auto.out': 'Bot abhi bahar ruka hai: {inner}',
+  'why.auto.holding': 'Market {mood} hai, bot apni kharidi cheez rakhe hue hai.',
+  'why.pick': 'Aapki pick, {strategy}: {inner}',
+  'why.pick.none': 'Is market ke liye abhi koi strategy nahi chuni.',
+  'why.sma.up':
+    'Price badhna shuru hua ({fast}-candle average {slow}-candle average ke upar gaya), isliye bot ne kharida.',
+  'why.sma.down':
+    'Price girna shuru hua ({fast}-candle average {slow}-candle average ke neeche aaya), isliye bot ne becha.',
+  'why.sma.upWait':
+    'Price pehle se upar ja raha hai, lekin naya start signal nahi hai, isliye bot intezaar karta hai.',
+  'why.sma.downWait': 'Price neeche ja raha hai, isliye bot upar mudne ka intezaar karta hai.',
+  'why.sma.badParams':
+    'Chhota average lambe se chhota hona chahiye. Settings mein is strategy ko check karo.',
+  'why.rsi.buy':
+    'Price tezi se gira aur asaadharan kam hai (RSI {rsi}, {limit} se neeche), isliye bot ne uchhaal ki ummeed mein kharida.',
+  'why.rsi.recovered':
+    'Price wapas uchhla (RSI {rsi} tak), isliye bot ne fayda pakka karne ke liye becha.',
+  'why.band.mid': 'Price apne normal level pe wapas aaya, isliye bot ne becha.',
+  'why.rsi.wait':
+    'Price abhi kaafi kam nahi hai (RSI {rsi}), isliye bot dip ka intezaar karta hai.',
+  'why.breakout.buy':
+    'Price pichhli {n} candles ke sabse upar level ({price}) ke upar nikla, isliye bot ne kharida.',
+  'why.breakout.sell':
+    'Price pichhli {n} candles ke sabse neeche level ({price}) ke neeche gira, isliye bot ne becha.',
+  'why.breakout.wait':
+    'Price abhi apni haal ki range ke andar hai, isliye bot breakout ka intezaar karta hai.',
+  'why.arb.trade':
+    'Coin {buy} pe {sell} se sasta tha, isliye bot ne ek pe kharida aur doosre pe becha (kharche ke baad lagbhag {edge}%).',
+  'why.arb.wait':
+    'Kharche ke baad exchanges ka price gap bahut chhota hai ({edge}%, chahiye {min}%), isliye bot intezaar karta hai.',
+  'why.arb.noQuotes': 'Compare karne ke liye bot ko kam se kam 2 exchanges ke price chahiye.',
+  'why.needCandles':
+    'Faisla lene se pehle bot abhi price history jama kar raha hai ({need} mein se {have} candles).',
+  'why.needCandlesShort': 'Faisla lene se pehle bot abhi price history jama kar raha hai.',
+  'why.mood.uptrend': 'Price lagatar upar ja raha hai.',
+  'why.mood.downtrend': 'Price lagatar neeche ja raha hai.',
+  'why.mood.sideways': 'Price bina saaf disha ke upar-neeche ho raha hai.',
+  'why.mood.squeeze': 'Price asaadharan roop se shaant ho gaya hai, bada move aa sakta hai.',
+  'why.mood.unclear': 'Signals aapas mein match nahi karte, isliye disha saaf nahi hai.',
+  'why.risk.kill': 'Emergency stop on hai, isliye koi trade nahi.',
+  'why.risk.daily':
+    'Aaj ka loss {loss}% pahunch gaya (limit {limit}%), isliye kal tak koi naya trade nahi.',
+  'why.risk.maxOpen': 'Bot ke paas pehle se {n} trades hain, ek saath itne hi allowed hain.',
+  'why.risk.cash': 'Kharidne ke liye koi free cash nahi bacha.',
+  'why.risk.small': 'Trade itna chhota hoga ki uska koi matlab nahi.',
+  'why.risk.nothing': 'Bechne ke liye kuch nahi hai.',
+  'why.risk.rejected': 'exchange ne mana kar diya (yeh jaan-boojhkar asli zindagi jaisa hai)',
+  'reason.details': 'Technical details dikhao',
+  'reason.hide': 'Technical details chhupao',
+
+  // Simple / Expert mode
+  'mode.label': 'View',
+  'mode.simple': 'Simple',
+  'mode.expert': 'Expert',
+  'mode.hint': 'Simple mein sirf zaroori cheezein. Expert mein har page aur har number.',
+  'nav.help': 'Help: setup dobara chalao',
+  // Safety presets
+  'preset.custom':
+    'Aapne numbers khud badle, isliye yeh custom setup hai. Preset pe wapas jaane ke liye koi card chuno.',
+  'set.presetSaved': 'Safety level save ho gaya',
+  'set.runSetup': 'Setup dobara chalao',
+  'set.markets.title': 'Kin markets mein trade karein',
+  'set.markets.hint': 'Kisi market ko off karo toh bot wahan trade karna band kar dega.',
+  // First-time setup wizard
+  'wiz.step': '{total} mein se step {n}',
+  'wiz.later': 'Baad mein',
+  'wiz.begin': 'Chalo setup karein',
+  'wiz.next': 'Aage',
+  'wiz.back': 'Peeche',
+  'wiz.finish': 'Bina shuru kiye khatam karo',
+  'wiz.start': 'Bot shuru karo',
+  'wiz.welcome.title': 'Swagat hai! Chalo shuru karte hain',
+  'wiz.welcome.body':
+    'Yeh app practice paise se trading sikhata hai. Setup mein lagbhag ek minute lagta hai.',
+  'wiz.welcome.p1':
+    'Sab kuch nakli paise se, asli market price ke saath. Yahan asli paisa nahi doob sakta.',
+  'wiz.welcome.p2':
+    'Bot aapke liye practice trades karta hai aur har faisla aasaan shabdon mein samjhata hai.',
+  'wiz.welcome.p3':
+    'Strategy chuno aur bot se race karo. Points achhi aadaton ke milte hain, luck ke nahi.',
+  'wiz.markets.title': 'Bot kin markets ko dekhe?',
+  'wiz.markets.body': 'Ise kabhi bhi Settings mein badal sakte ho.',
+  'wiz.markets.best': 'shuru ke liye best: 24/7 khula',
+  'wiz.markets.none': 'Kam se kam ek market chuno.',
+  'wiz.strategy.title': 'Apni strategy chuno',
+  'wiz.strategy.body':
+    'Aapki side aise trade karegi. Confuse ho? Trend Rider samajhne mein sabse aasaan hai.',
+  'wiz.strategy.race':
+    'Bot Auto-Pilot se aapke khilaaf khelta hai, jo market mood ke hisaab se strategy badalta hai.',
+  'wiz.safety.title': 'Bot kitna savdhaan rahe?',
+  'wiz.safety.body':
+    'Yeh limits aapke practice paise ko bachaati hain. Shuru ke liye Savdhaan achha hai.',
+  'wiz.ready.title': 'Sab taiyaar!',
+  'wiz.ready.body': 'Start dabao aur bot price dekhna shuru karega. Yahan dekhna hai:',
+  'wiz.ready.tip1': 'Home pe aapka practice paisa aur bot abhi kya kar raha hai, dikhta hai.',
+  'wiz.ready.tip2': 'Aap vs Bot mein live dikhta hai kaun jeet raha hai.',
+  'wiz.ready.tip3': 'Dotted line wale har shabd ka chhota matlab hai. Tap karo.',
+  // Bot status on Home
+  'narr.title': 'Bot abhi kya kar raha hai?',
+  'narr.hint': 'Har market ke liye live, aasaan shabdon mein.',
+  'narr.stopped': 'Bot aaraam kar raha hai. Start dabao, woh price dekhna shuru karega.',
+  'narr.halted': 'Emergency stop on hai, isliye bot kahin trade nahi kar raha.',
+  'narr.disabled': 'Yeh market off hai, isliye bot ise nahi dekh raha.',
+  'narr.closed': 'Yeh market abhi band hai, isliye bot intezaar kar raha hai.',
+  'narr.error': 'Bot ko is market ke price nahi mile. Woh koshish karta rahega.',
+  'narr.warming': 'Bot ne yahan abhi shuru kiya hai aur pehle price padh raha hai.',
+  'narr.using':
+    '{symbols} dekh raha hai. Price zyada tar {mood} hain, isliye bot {strategy} use kar raha hai.',
+  'narr.out':
+    '{symbols} dekh raha hai. Price zyada tar {mood} hain, isliye bot abhi bahar ruka hai.',
+  'narr.last': 'Pichhla kaam: {symbol} {action}, {ago}.',
 };

@@ -6,6 +6,7 @@ import { MOOD_BY_ID, type Mood, strategyName } from '@/content/strategies';
 import { useLang } from '@/i18n';
 import { MARKET_LABEL, money, pct, timeAgo, tone } from '@/lib/format';
 import type { Currency, EquityPoint, Quest, Trade } from '@/lib/types';
+import { renderReason } from '@/lib/explain';
 import { cn } from '@/lib/utils';
 import { AnimatedMoney } from './AnimatedMoney';
 import { Term } from './Term';
@@ -452,6 +453,9 @@ export function RecentTrades({ trades }: { trades: Trade[] }) {
                   </div>
                   <div className="truncate text-xs text-muted-foreground">
                     {strategyName(x.strategy, pick)} · {timeAgo(x.time)}
+                  </div>
+                  <div className="line-clamp-2 text-xs text-muted-foreground" title={x.reason}>
+                    {renderReason(x.reason, t, pick)}
                   </div>
                 </div>
                 <div

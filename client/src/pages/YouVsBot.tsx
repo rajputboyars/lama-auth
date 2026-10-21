@@ -14,6 +14,7 @@ import {
 } from 'recharts';
 import { AnimatedMoney } from '@/components/AnimatedMoney';
 import { BotControls } from '@/components/BotControls';
+import { Reason } from '@/components/Reason';
 import { Term } from '@/components/Term';
 import { TradeCard } from '@/components/TradeCard';
 import { Empty, ErrorNote, Note, PageHeader, Panel } from '@/components/common';
@@ -269,7 +270,7 @@ function Match({ d, onChanged }: { d: DuelMarket; onChanged(): void }) {
                   {moods.map(([sym, r]) => {
                     const info = MOOD_BY_ID.get(r.mood);
                     return (
-                      <li key={sym} className="neu-inset px-3 py-2 text-sm" title={r.reason}>
+                      <li key={sym} className="neu-inset px-3 py-2 text-sm">
                         <span className="font-semibold">{sym}</span>{' '}
                         <span className="text-muted-foreground">
                           {info?.icon} {t('vs.moodIs')}{' '}
@@ -283,6 +284,7 @@ function Match({ d, onChanged }: { d: DuelMarket; onChanged(): void }) {
                             </span>
                           )}
                         </span>
+                        <Reason text={r.reason} className="mt-1 text-xs text-muted-foreground" />
                       </li>
                     );
                   })}

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Flame } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { BotControls } from '@/components/BotControls';
+import { BotNarrator } from '@/components/BotNarrator';
 import { DuelSummary } from '@/components/DuelSummary';
 import { EquityChart } from '@/components/EquityChart';
 import { Term } from '@/components/Term';
@@ -22,6 +23,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { GLOSSARY } from '@/content/glossary';
 import type { Mood } from '@/content/strategies';
 import { useLearned } from '@/hooks/learned';
+import { useMode } from '@/hooks/mode';
 import { useApi } from '@/hooks/useApi';
 import { useLive } from '@/hooks/live';
 import { useLang } from '@/i18n';
@@ -31,6 +33,7 @@ import type { Achievement, Currency, DuelMarket, Profile, Quest, Stats, Trade } 
 export function CommandCenter() {
   const { walletTick, trades: liveTrades, prices } = useLive();
   const { t } = useLang();
+  const { simple } = useMode();
   const stats = useApi<Stats>('/stats', { pollMs: 30_000, deps: [liveTrades.length] });
   const profile = useApi<Profile>('/game/profile', { pollMs: 60_000 });
   const quests = useApi<Quest[]>('/game/quests', { pollMs: 60_000 });
@@ -133,6 +136,7 @@ export function CommandCenter() {
         }
       />
       <PaperBanner />
+      <BotNarrator duel={duel.data ?? []} />
       <ErrorNote error={stats.error} />
 
       <div className="grid gap-6 lg:grid-cols-12">
@@ -192,24 +196,30 @@ export function CommandCenter() {
 
       <DuelSummary />
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat
-          label={<Term id="fees">{t('home.costs')}</Term>}
-          value={total ? money(total.costsPaid, cur) : '—'}
-          sub={t('home.costsHint')}
-        />
-        <Stat
-          label={<Term id="wallet">{t('home.wallets')}</Term>}
-          value={stats.data?.strategies.filter((s) => s.currency === cur).length ?? '—'}
-          sub={t('home.walletsHint')}
-        />
-        <Stat
-          label={t('dash.started')}
-          value={total ? money(total.startingCash, cur) : '—'}
-          sub={t('dash.startedHint')}
-        />
-        <Stat label={<Term id="xp">XP</Term>} value={profile.data?.xp ?? '—'} sub={t('xp.hint')} />
-      </div>
+      {!simple && (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <Stat
+            label={<Term id="fees">{t('home.costs')}</Term>}
+            value={total ? money(total.costsPaid, cur) : '—'}
+            sub={t('home.costsHint')}
+          />
+          <Stat
+            label={<Term id="wallet">{t('home.wallets')}</Term>}
+            value={stats.data?.strategies.filter((s) => s.currency === cur).length ?? '—'}
+            sub={t('home.walletsHint')}
+          />
+          <Stat
+            label={t('dash.started')}
+            value={total ? money(total.startingCash, cur) : '—'}
+            sub={t('dash.startedHint')}
+          />
+          <Stat
+            label={<Term id="xp">XP</Term>}
+            value={profile.data?.xp ?? '—'}
+            sub={t('xp.hint')}
+          />
+        </div>
+      )}
 
       <Panel title={t('home.curve', { cur })} hint={t('home.curveHint')}>
         <EquityChart

@@ -6,11 +6,14 @@ import { useLang } from '@/i18n';
 import { MARKET_LABEL, money, price, qty, timeAgo } from '@/lib/format';
 import type { Trade } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { useMode } from '@/hooks/mode';
+import { Reason } from './Reason';
 import { Badge } from './common';
 import { Term } from './Term';
 
 export function TradeCard({ trade, onReview }: { trade: Trade; onReview?: (t: Trade) => void }) {
   const { t, pick } = useLang();
+  const { simple } = useMode();
   const failed = trade.status === 'failed';
   const closing = trade.side !== 'buy';
   const win = closing && trade.pnl > 0;
@@ -75,10 +78,12 @@ export function TradeCard({ trade, onReview }: { trade: Trade; onReview?: (t: Tr
           k={<Term id="fill">{t('trade.price')}</Term>}
           v={failed ? '—' : price(trade.fillPrice)}
         />
-        <Field
-          k={<Term id="fees">{t('trade.costs')}</Term>}
-          v={money(trade.fees + trade.taxes, trade.currency)}
-        />
+        {!simple && (
+          <Field
+            k={<Term id="fees">{t('trade.costs')}</Term>}
+            v={money(trade.fees + trade.taxes, trade.currency)}
+          />
+        )}
         {closing && !failed ? (
           <Field
             k={<Term id="pnl">{t('trade.result')}</Term>}
@@ -89,12 +94,13 @@ export function TradeCard({ trade, onReview }: { trade: Trade; onReview?: (t: Tr
             }
           />
         ) : (
-          <Field k={t('trade.screenPrice')} v={price(trade.refPrice)} />
+          !simple && <Field k={t('trade.screenPrice')} v={price(trade.refPrice)} />
         )}
       </div>
-      <p className="mt-3 neu-inset px-3 py-2 text-xs text-muted-foreground">
-        <span className="font-semibold text-foreground">{t('trade.why')}</span> {trade.reason}
-      </p>
+      <div className="neu-inset mt-3 px-3 py-2 text-sm text-muted-foreground">
+        <span className="font-semibold text-foreground">{t('trade.why')}</span>{' '}
+        <Reason text={trade.reason} className="inline" />
+      </div>
 
       {trade.review ? (
         <p className="mt-2 flex gap-2 rounded-lg border p-2 text-xs">
