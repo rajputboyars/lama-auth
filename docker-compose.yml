@@ -19,9 +19,10 @@ services:
       dockerfile: server/Dockerfile
     container_name: paperbot-server
     restart: unless-stopped
+    # MONGO_URI comes from .env: the bundled Mongo (mongodb://mongo:27017/paperbot)
+    # or a hosted one such as MongoDB Atlas.
     env_file: .env
     environment:
-      MONGO_URI: mongodb://mongo:27017/paperbot
       CLIENT_ORIGIN: http://localhost:5173
     ports:
       - '4000:4000'
