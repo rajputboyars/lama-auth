@@ -11,10 +11,11 @@ Stack: MongoDB · Express · React (Vite) · Node.js · Socket.io · TypeScript 
 ```bash
 # 1. Requirements: Node 20+, Docker (for MongoDB)
 npm install
-docker compose up -d                  # MongoDB on localhost:27017
+docker compose up -d mongo            # MongoDB on localhost:27017 (or use MongoDB Atlas)
 
 # 2. Configure
 cp .env.example .env
+#   set MONGO_URI=mongodb://localhost:27017/paperbot (or your Atlas connection string)
 npm run hash-password -w server -- "choose-a-long-password"
 #   put the hash in .env as ADMIN_PASSWORD_HASH='...'  (single quotes: bcrypt hashes contain $)
 #   set JWT_SECRET to a random string of 32+ characters
@@ -35,7 +36,7 @@ cp .env.example .env                  # set JWT_SECRET and ADMIN_PASSWORD_HASH a
 docker compose up -d --build          # Mongo + API (:4000) + dashboard on http://localhost:5173
 ```
 
-The dashboard container is nginx serving the built client and proxying `/api` and `/socket.io` to the API container. If port 27017 is taken, set `MONGO_HOST_PORT` in `.env`.
+The dashboard container is nginx serving the built client and proxying `/api` and `/socket.io` to the API container. The API reads `MONGO_URI` from `.env`: keep `mongodb://mongo:27017/paperbot` for the bundled Mongo container, or paste a MongoDB Atlas connection string (ending in `/paperbot`) to use the same database as your online deploy. If port 27017 is taken, set `MONGO_HOST_PORT` in `.env`.
 
 ## Pages for beginners
 
